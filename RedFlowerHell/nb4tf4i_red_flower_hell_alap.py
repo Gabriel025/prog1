@@ -44,9 +44,9 @@ else:
 
 agent_host = MalmoPython.AgentHost()
 try:
-    agent_host.parse( sys.argv )
+    agent_host.parse(sys.argv)
 except RuntimeError as e:
-    print('ERROR:',e)
+    print('ERROR:', e)
     print(agent_host.getUsage())
     exit(1)
 if agent_host.receivedArgument("help"):
@@ -67,67 +67,52 @@ with open(missionXML_file, 'r') as f:
     my_mission.drawBlock( 0, 0, 0, "lava")
 
 
-class Hourglass:
-    def __init__(self, charSet):
-        self.charSet = charSet
-        self.index = 0
-    def cursor(self):
-        self.index=(self.index+1)%len(self.charSet)
-        return self.charSet[self.index]
+my_mission_record = MalmoPython.MissionRecordSpec()
 
-hg = Hourglass('|/-\|')
+# Attempt to start a mission:
+max_retries = 6
+for retry in range(max_retries):
+    try:
+        agent_host.startMission(my_mission, my_mission_record)
+        break
+    except RuntimeError as e:
+        if retry == max_retries - 1:
+            print("Error starting mission:", e)
+            exit(1)
+        else:
+            print("Attempting to start the mission:")
+            time.sleep(2)
 
-class Steve:
-    def __init__(self, agent_host):
-        self.agent_host = agent_host
-        
-        self.nof_red_flower = 0
+# Loop until mission starts:
+print("   Waiting for the mission to start ")
+world_state = agent_host.getWorldState()
 
-    def run(self):
-        world_state = self.agent_host.getWorldState()
-        # Loop until mission ends:
-        while world_state.is_mission_running:
-            print("--- nb4tf4i arena -----------------------------------\n")
-            self.agent_host.sendCommand( "move 1" )
-            time.sleep(.5)            
-            self.agent_host.sendCommand( "turn 1" )
-            time.sleep(.5)
-            world_state = self.agent_host.getWorldState()
-
-num_repeats = 1
-for ii in range(num_repeats):
-
-    my_mission_record = MalmoPython.MissionRecordSpec()
-
-    # Attempt to start a mission:
-    max_retries = 6
-    for retry in range(max_retries):
-        try:
-            agent_host.startMission( my_mission, my_mission_record )
-            break
-        except RuntimeError as e:
-            if retry == max_retries - 1:
-                print("Error starting mission:", e)
-                exit(1)
-            else:
-                print("Attempting to start the mission:")
-                time.sleep(2)
-
-    # Loop until mission starts:
-    print("   Waiting for the mission to start ")
+while not world_state.has_mission_begun:
+    print(".", sep="", end="")
+    time.sleep(0.5)
     world_state = agent_host.getWorldState()
+    for error in world_state.errors:
+        print("Error:",error.text)
 
-    while not world_state.has_mission_begun:
-        print("\r"+hg.cursor(), end="")
-        time.sleep(0.15)
-        world_state = agent_host.getWorldState()
-        for error in world_state.errors:
-            print("Error:",error.text)
+print("NB4tf4i Red Flower Hell running\n")
 
-    print("NB4tf4i Red Flower Hell running\n")
-    steve = Steve(agent_host)
-    steve.run()
-    print("Number of flowers: "+ str(steve.nof_red_flower))
+iter = 0
+ob = 0
+while world_state.is_mission_running:
+    world_state = agent_host.getWorldState()
+    if len(world_state.observations) > 0:
+        ob = json.loads(world_state.observations[-1].text)
+        
+        print(ob.get("LineOfSight"))
+    
+    #agent_host.sendCommand("move 1")
+    agent_host.sendCommand("pitch 1")
 
+    time.sleep(1/20)
+
+    iter += 1
+
+
+
+print("Number of flowers: " + str(n_flowers))
 print("Mission ended")
-# Mission has ended.
