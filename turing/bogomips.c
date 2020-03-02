@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     unsigned long long loops_per_sec = 1;
     unsigned long long mcsecs;
 
-    while((loops_per_sec <<= 1))
+    while(loops_per_sec <<= 1)
     {
         mcsecs = clock();
         spin(loops_per_sec);
