@@ -1,0 +1,157 @@
+(Az ISO/IEC9989:1999 szabványból (C99), kiemelve a C89-től eltérő elemeket)
+
+(6.5.1) primary-expression:
+    identifier
+    constant
+    string-literal
+    ( expression )
+
+(6.5.2) postfix-expression:
+    primary-expression
+    postfix-expression [ expression ]
+    postfix-expression ( )                                      //azaz az argumentumlista-kifejezés opcionális
+    postfix-expression ( argument-expression-list )
+    postfix-expression . identifier
+    postfix-expression -> identifier
+    postfix-expression ++
+    postfix-expression --
+    ( type-name ) { initializer-list }                          //csak C99-től
+    ( type-name ) { initializer-list , }                        //csak C99-től  (igen, az (int){1,2,3,} is helyes)
+
+(6.5.2) argument-expression-list:
+    assignment-expression
+    argument-expression-list , assignment-expression
+
+(6.5.3) unary-expression:
+    postfix-expression
+    ++ unary-expression
+    -- unary-expression
+    unary-operator cast-expression
+    sizeof unary-expression
+    sizeof ( type-name )
+
+(6.5.3) unary-operator: one of & * + - ~ !
+
+(6.5.4) cast-expression:
+    unary-expression
+    ( type-name ) cast-expression
+
+(6.5.5) multiplicative-expression:
+    cast-expression
+    multiplicative-expression * cast-expression
+    multiplicative-expression / cast-expression
+    multiplicative-expression % cast-expression
+
+(6.5.6) additive-expression:
+    multiplicative-expression
+    additive-expression + multiplicative-expression
+    additive-expression - multiplicative-expression
+
+(6.5.7) shift-expression:
+    additive-expression
+    shift-expression << additive-expression
+    shift-expression >> additive-expression
+
+(6.5.8) relational-expression:
+    shift-expression
+    relational-expression < shift-expression            //ezek szerint lehet láncolni a relációs jeleket? (pl. 1<x<4)
+    relational-expression > shift-expression            //igen, lehet, viszont nem a matematikában megszokott
+    relational-expression <= shift-expression           //módon fog viselkedni
+    relational-expression >= shift-expression           //(az ilyen kifejezések értéke szemantikailag 0 vagy 1,
+                                                        // így pl. a -1<0<1-re hamis (0) értéket kapunk: -1 kisebb a 0-nál,
+                                                        // tehát -1<0 1-re értékelődik ki; következő lépésben tehát az 1<1-et kell kiértékelni)
+(6.5.9) equality-expression:
+    relational-expression
+    equality-expression == relational-expression
+    equality-expression != relational-expression
+
+(6.5.10) AND-expression:
+    equality-expression
+    AND-expression & equality-expression
+
+(6.5.11) exclusive-OR-expression:
+    AND-expression
+    exclusive-OR-expression ^ AND-expression
+
+(6.5.12) inclusive-OR-expression:
+    exclusive-OR-expression
+    inclusive-OR-expression | exclusive-OR-expression
+
+(6.5.13) logical-AND-expression:
+    inclusive-OR-expression
+    logical-AND-expression && inclusive-OR-expression
+
+(6.5.14) logical-OR-expression:
+    logical-AND-expression
+    logical-OR-expression || logical-AND-expression
+
+(6.5.15) conditional-expression:
+    logical-OR-expression
+    logical-OR-expression ? expression : conditional-expression
+
+(6.5.16) assignment-expression:
+    conditional-expression
+    unary-expression assignment-operator assignment-expression
+
+(6.5.16) assignment-operator: one of = *= /= %= += -= <<= >>= &= ^= |=
+
+(6.5.17) expression:
+    assignment-expression
+    expression , assignment-expression
+
+(6.6) constant-expression:
+    conditional-expression
+
+
+/*
+6.5.17 alapján felmerülhet a kérdés:
+
+Akkor minden kifejezés egy értékadó kifejezésre vezethető vissza?
+(a vessző operátorra vonatkozó sortól tekintsünk el egy pillanatra)
+
+A válasz furcsa módon igen, annak ellenére,
+hogy nem minden kifejezésben történik értékadás (pl. x + 5).
+
+Ha ránézünk 6.5.16-ra, akkor viszont azt látjuk, hogy egy (értékadást nem tartalmazó)
+feltételes kifejezés is lehet értékadó kifejezés.
+Ugyanígy a feltételes kifejezés is lehet csak egy szimpla logikai VAGY kifejezés.
+És ez a lánc visszamegy egészen az elsődleges kifejezésig (primary expr.).
+
+Miért is van ez így? Egyszerűen azért, mert a formális nyelvek
+(a BNF jellegű definícióknál környezetfüggetlen nyelvekről beszéünk) definiálásánál
+így lehet kialakítani az operátorok erősorrendjét.
+*/
+
+
+//////////////////////////////////////////////
+Példák C szabványbeli különbségekre:
+
+-kommentek: C89-ben csak /**/, utána már sorvégi kommenteknél // is
+-argumentumlisták:
+    K&R C-ben még így néztek ki:
+
+    void func(a, b)
+    int a;
+    char *b;
+    {
+        ...
+    
+    C89-től viszont már így:
+    
+    void func(int a, char *b)
+    {
+        ...
+    
+    (Érdekesség: ha csak em kényszerítjük egy adott standard használatára,
+                 a GCC máig elfogadja az első változatot is kompatibilitás okán)
+
+-makrók (makrók, nem függvények; azok már K&R-től léteztek) változó számú argumentummal (C99)
+
+    #define macro_print(...) printf("__VA_ARGS__", __VA_ARGS__);
+
+-VLA-k (Variable Length Array): nem konstans a deklarációban megadott méretük (C99 - se előtte, se utána nem standard)
+
+    int n = get_some_value();
+    int arr[n];
+
+-restrict kulcsszó

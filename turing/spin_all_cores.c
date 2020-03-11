@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-    get_nprocs_conf();
+    int nprocs = get_nprocs_conf();
     cpu_set_t cpus;
     CPU_ZERO(&cpus);
     CPU_SET(0, &cpus);
