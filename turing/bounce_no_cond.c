@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <string.h>
 #include <ncurses.h>
 #include <math.h>
 
@@ -16,7 +15,7 @@ int main(int argc, char **argv)
     pos_x = pos_y = 0;
     vel_x = vel_y = 1;
 
-    while(true)
+    while(TRUE)
     {
         pos_x += vel_x;
         pos_y += vel_y;
@@ -47,8 +46,8 @@ int main(int argc, char **argv)
 //returns -1 if n<=0 or n>=max, 1 otherwise
 int is_within_bounds(int n, int max)
 {
-    int upper = (n / (max) % 2) * -2 + 1;
-    int lower = ((max - n) / max % 2) * -2 + 1;
+    int upper = (n / max) * -2 + 1;
+    int lower = ((max - n) / max) * -2 + 1;
 
     return upper * lower;
 }

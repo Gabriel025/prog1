@@ -1,4 +1,199 @@
-(Az ISO/IEC9989:1999 szabványból (C99), kiemelve a C89-től eltérő elemeket)
+//K&R (1st edition) C: (ahogy a könyvben meg van írva)
+
+statement:
+    compound-statement
+    expression ;
+    if ( expression ) statement
+    if ( expression ) statement else statement       //Megjegyzés: nincs szükség külön else if-re!
+    while ( expression ) statement
+    do statement while ( expression ) ;
+    for ( expression<opt> ; expression<opt> ; expression<opt> ) statement            //
+    switch ( expression ) statement
+    case constant-expression : statement
+    default : statement
+    break ;                                                 //nincs többszörös break
+    continue ;
+    return ;
+    return expression ;
+    goto identifier ;
+    identifier : statement
+    ;
+
+compound-statement:
+    { declaration-list<opt> statement-list<opt> }                //deklarációk csak a blokk elején
+
+declaration_list:
+    declaration
+    declaration declaration_list
+
+statement_list:
+    statement
+    statement statement_list
+
+
+
+
+//ANSI C:
+
+
+statement:
+    labeled_statement
+    compound_statement
+    expression_statement
+    selection_statement
+    iteration_statement
+    jump_statement
+
+labeled_statement:
+    identifier : statement
+    case constant_expression : statement
+    default : statement
+
+compound_statement:
+    { declaration_list<opt> statement_list<opt> }
+
+declaration_list:
+    declaration
+    declaration_list declaration
+
+statement_list:
+    statement
+    statement_list statement
+
+expression_statement:
+    ;
+    expression ;
+
+selection_statement:
+    if ( expression ) statement
+    if ( expression ) statement else statement
+    switch ( expression ) statement
+
+iteration_statement:
+    while ( expression ) statement
+    do statement WHILE ( expression ) ;
+    for ( expression_statement expression_statement ) statement
+    for ( expression_statement expression_statement expression ) statement
+
+jump_statement:
+    goto identifier ;
+    continue ;
+    break ;
+    return ;
+    return expression ;
+
+
+//C99:
+
+statement:
+    labeled_statement
+    compound_statement
+    expression_statement
+    selection_statement
+    iteration_statement
+    jump_statement
+
+labeled_statement:
+    identifier : statement
+    case constant_expression : statement
+    default : statement
+
+compound_statement:
+    { }
+    { block_item_list }
+
+block_item_list:
+    block_item
+    block_item_list block_item
+
+block_item:
+    declaration
+    statement
+
+expression_statement:
+    ;
+    expression ;
+
+selection_statement:
+    if ( expression ) statement
+    if ( expression ) statement else statement
+    switch ( expression ) statement
+
+iteration_statement:
+    while ( expression ) statement
+    do statement while ( expression ) ;
+    for ( expression_statement expression_statement ) statement
+    for ( expression_statement expression_statement expression ) statement
+    for ( declaration expression_statement ) statement
+    for ( declaration expression_statement expression ) statement
+
+jump_statement:
+    goto identifier ;
+    continue ;
+    break ;
+    return ;
+    return expression ;
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////
+Példák C szabványbeli különbségekre:
+
+-kommentek: C89-ben csak /**/, utána már sorvégi kommenteknél // is
+-argumentumlisták:
+    K&R C-ben még így néztek ki:
+
+    void func(a, b)
+    int a;
+    char *b;
+    {
+        ...
+    
+    C89-től viszont már így:
+    
+    void func(int a, char *b)
+    {
+        ...
+    
+    (Érdekesség: ha csak em kényszerítjük egy adott standard használatára,
+                 a GCC máig elfogadja az első változatot is kompatibilitás okán)
+
+
+-deklarációk C99 előtt csak blokkok elején, illetve függvények argumentumlistáiban lehettek
+
+-makrók (makrók, nem függvények; azok már K&R-től léteztek) változó számú argumentummal (C99)
+
+    #define macro_print(...) printf("__VA_ARGS__", __VA_ARGS__);
+
+-inline függvények (C99-től)
+
+
+-VLA-k (Variable Length Array): nem konstans a deklarációban megadott méretük (C99 - se előtte, se utána nem standard)
+
+    int n = get_some_value();
+    int arr[n];
+
+-változó méretű tömbök struktúrák végén (flexible array members)
+
+-restrict kulcsszó
+
+-void func(void) vs void func()
+
+
+
+//////////////////////////////////////////////
+
+
+Kifejezések:
+
 
 (6.5.1) primary-expression:
     identifier
@@ -121,37 +316,3 @@ Miért is van ez így? Egyszerűen azért, mert a formális nyelvek
 (a BNF jellegű definícióknál környezetfüggetlen nyelvekről beszéünk) definiálásánál
 így lehet kialakítani az operátorok erősorrendjét.
 */
-
-
-//////////////////////////////////////////////
-Példák C szabványbeli különbségekre:
-
--kommentek: C89-ben csak /**/, utána már sorvégi kommenteknél // is
--argumentumlisták:
-    K&R C-ben még így néztek ki:
-
-    void func(a, b)
-    int a;
-    char *b;
-    {
-        ...
-    
-    C89-től viszont már így:
-    
-    void func(int a, char *b)
-    {
-        ...
-    
-    (Érdekesség: ha csak em kényszerítjük egy adott standard használatára,
-                 a GCC máig elfogadja az első változatot is kompatibilitás okán)
-
--makrók (makrók, nem függvények; azok már K&R-től léteztek) változó számú argumentummal (C99)
-
-    #define macro_print(...) printf("__VA_ARGS__", __VA_ARGS__);
-
--VLA-k (Variable Length Array): nem konstans a deklarációban megadott méretük (C99 - se előtte, se utána nem standard)
-
-    int n = get_some_value();
-    int arr[n];
-
--restrict kulcsszó

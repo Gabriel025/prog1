@@ -1,44 +1,60 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <math.h>
+#include <unistd.h>
+
+/*
+Felhasznált források:
+http://home.ie.cuhk.edu.hk/~wkshum/papers/pagerank.pdf
+https://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm (egy kissé eltérő megoldás)
+*/
 
 void damp_matrix(int n, double mat[n][n], double d);
-void print_array(int n, double array[n]);
+void Amulx(int n, double A[n][n], double x[n], double result[n]);
+
+void swap(void *a, void *b, size_t len);
 double delta(int n, double vec[n], double prev_vec[n]);
+
+void print_array(int n, double array[n]);
 
 int main(void)
 {
     /*
-        The columns of M represent the pages in terms
-        of links from other sites that point to them.
-        (The elements of each column add up to 1.)
+        M[i][j] értéke aszerint alakul, hogy
+        az j sorszámú oldalon van-e a
+        i sorszámú oldalra mutató link.
+        M oszlopainak az összege 1
     */
     double M[4][4] = {
         {0.0, 0.0, 0.33, 0.0},
-        {1.0, 0.5, 0.33, 1.0},
+        {1.0, 0.0, 0.33, 1.0},
         {0.0, 0.5, 0.00, 0.0},
-        {0.0, 0.0, 0.33, 0.0}
+        {0.0, 0.5, 0.33, 0.0}
     };
 
-    //Apply the usual damping factor to M (this way the iterations themselves are simpler)
+    //"simítunk" a mátrixon (damping); ez egy egész gyakori módszer
+    //a "lógó" oldalak által okozott végeten ciklusok elkerülésére
     damp_matrix(4, M, 0.85);
 
     double PR[4] = {1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0};
     double PR_prev[4] = {0.0, 0.0, 0.0, 0.0};
 
-    int i = 0, j = 0;
-
-    for (;;)
+    while(1)
     {
-        printf("Avg: %f", delta(4, PR, PR_prev));
         if (delta(4, PR, PR_prev) < 0.00001)
             break;
 
         //PageRank iteration:
         Amulx(4, M, PR, PR_prev);
+        swap(PR, PR_prev, sizeof(PR));
     }
-    kiir(4, PR);
+
+    print_array(4, PR);
     return 0;
 }
+
+
 
 void damp_matrix(int size, double mat[size][size], double d)
 {
@@ -49,7 +65,12 @@ void damp_matrix(int size, double mat[size][size], double d)
 
 void Amulx(int n, double A[n][n], double x[n], double result[n])
 {
-    int i[n][4];
+    for(int i = 0; i < n; i++)
+    {
+        result[i] = 0;
+        for(int j = 0; j < n; j++)
+            result[i] += A[i][j] * x[j];
+    }
 }
 
 double delta(int n, double vec[n], double prev_vec[n])
@@ -57,8 +78,24 @@ double delta(int n, double vec[n], double prev_vec[n])
     double sum = 0.0;
     for (int i = 0; i < n; i++)
         sum += (vec[i] - prev_vec[i]) * (vec[i] - prev_vec[i]);
+    sum /= n;
     
     return sqrt(sum);
+}
+
+
+void swap(void *a, void *b, size_t len)
+{
+    char tmp;
+    char *ach = (char*)a;
+    char *bch = (char*)b;
+
+    for(size_t i = 0; i < len; i++)
+    {
+        tmp = ach[i];
+        ach[i] = bch[i];
+        bch[i] = tmp;
+    }
 }
 
 void print_array(int n, double array[n])
@@ -66,6 +103,3 @@ void print_array(int n, double array[n])
     for (int i = 0; i < n; i++)
         printf("%f\n", array[i]);
 }
-
-//A good paper explaining PR: http://home.ie.cuhk.edu.hk/~wkshum/papers/pagerank.pdf
-//(Slightly different approach: https://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm)

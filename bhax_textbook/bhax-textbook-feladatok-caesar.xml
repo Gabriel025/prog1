@@ -1,0 +1,150 @@
+<chapter xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0" xml:lang="hu">
+    <info>
+        <title>Helló, Caesar!</title>
+    </info>
+
+    <section>
+        <title><type>double **</type> háromszögmátrix</title>
+        <para>
+            Írj egy olyan <function>malloc</function> és <function>free</function>
+            párost használó C programot, amely helyet foglal
+            egy alsó háromszög mátrixnak a szabad tárban!
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/1MRTuKwRsB0">https://youtu.be/1MRTuKwRsB0</link>,
+            <link xlink:href="https://youtu.be/RKbX5-EWpzA">https://youtu.be/RKbX5-EWpzA</link>.
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="Caesar/tm.c">
+                <filename>bhax/thematic_tutorials/bhax_textbook_IgyNeveldaProgramozod/Caesar/tm.c</filename>
+            </link>
+        </para>
+        <figure>
+            <title>A <type>double **</type> háromszögmátrix a memóriában</title>
+            <mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/doublecscs.png" scale="50"/>
+                </imageobject>
+                <textobject>
+                    <phrase>A <type>double **</type> háromszögmátrix a memóriában</phrase>
+                </textobject>
+            </mediaobject>
+        </figure>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+        <para>
+A megoldásomban definiáltam egy struktúrát annak érdekében, hogy az alsó háromszögmátrixunk egy jól behatárolható típussal rendelkezzen.
+Ez a nyers <code language="c">double**</code> mutatókhoz képest plusz szemantikai jelentést hordoz. Ha mondjuk egy tényleges mátrixokkal dolgozó könyvtárat
+akarunk létrehozni C-ben, nem érdemes a könyvtár használójának nyers mutatókat visszaadni, hiszen ez rengeteg hibalehetőséghez vezet.
+Ehhez hasonló megoldások nagyon gyakran jelentkeznek C-ben, és nem nehéz látni, hogy ez hogy vezetett el az osztályok elterjedéséhez.
+Az ilyen mintázatokat (csinálunk egy struktúrát és függvényeket, melyek ezzel dolgoznak) nevezhetnénk a "szegényember osztályainak". (Az LZW feladat esete hasonló.)
+</para><para>
+Ezzel a példával jól lehet szemléltetni a templatek értelmét is, hiszen így, ilyen formában csak double értékeket tudunk az alsó háromszögmátrixunkban tárolni.
+Mi van akkor, ha komplex számokat szeretnénk használni? A C nyelv határán vagyunk, ugyanis C-ben erre a problémára csak igen kellemetlen megoldások léteznek.
+        </para>
+        <programlisting language="c"><xi:include href="../caesar/doublexx.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+    </section>
+
+    <section>
+        <title>C EXOR titkosító</title>
+        <para>
+            Írj egy EXOR titkosítót C-ben!
+        </para>
+        <para>
+            Megoldás forrása: egy részletes feldolgozása az 
+            <link xlink:href="https://progpater.blog.hu/2011/02/15/felvetelt_hirdet_a_cia">posztban</link>, lásd az e.c forrást.               
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+        <programlisting language="c"><xi:include href="../caesar/xor_encrypt.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+    </section>
+
+    <section>
+        <title>Java EXOR titkosító</title>
+        <para>
+            Írj egy EXOR titkosítót Java-ban!
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://www.tankonyvtar.hu/hu/tartalom/tkt/javat-tanitok-javat/ch01.html#exor_titkosito">https://www.tankonyvtar.hu/hu/tartalom/tkt/javat-tanitok-javat/ch01.html#exor_titkosito</link>
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+    </section>
+
+    <section xml:id="bhax-textbook-feladatok-caesar.EXOR-toro">
+        <title>C EXOR törő</title>
+        <para>
+            Írj egy olyan C programot, amely megtöri az első feladatban előállított titkos szövegeket!
+        </para>
+        <para>
+            Megoldás forrása: egy részletes feldolgozása az 
+            <link xlink:href="https://progpater.blog.hu/2011/02/15/felvetelt_hirdet_a_cia">posztban</link>, lásd az t.c forrást.               
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+<para>
+
+</para>
+<programlisting language="c"><xi:include href="../caesar/xor_crack.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>           
+    </section>
+
+    <section>
+        <title>Neurális OR, AND és EXOR kapu</title>
+        <para>
+            R
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/Koyw6IH5ScQ">https://youtu.be/Koyw6IH5ScQ</link>
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://gitlab.com/nbatfai/bhax/tree/master/attention_raising/NN_R">https://gitlab.com/nbatfai/bhax/tree/master/attention_raising/NN_R</link>
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+    </section>
+
+    <section>
+        <title>Hiba-visszaterjesztéses perceptron</title>
+        <para>
+            Fontos, hogy ebben a feladatban még nem 
+            a <link xlink:href="https://prezi.com/0u8ncvvoabcr/no-programming-programming/">neurális paradigma</link> megismerése 
+            a cél, hanem a többrétegű perceptron memóriakezelése (lásd majd a változó argumentumszámú
+            konstruktorban a <type>double ***</type> szerkezetet). 
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/XpBnR31BRJY">https://youtu.be/XpBnR31BRJY</link>
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://github.com/nbatfai/nahshon/blob/master/ql.hpp#L64">https://github.com/nbatfai/nahshon/blob/master/ql.hpp#L64</link>
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+        <!--<programlisting language="c"><xi:include href="../caesar/backprop.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting> -->
+    </section>
+
+    <section>
+        <title>Vörös Pipacs Pokol/írd ki, mit lát Steve</title>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/-GX8dzGqTdM">https://youtu.be/-GX8dzGqTdM</link>
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://github.com/nbatfai/RedFlowerHell">https://github.com/nbatfai/RedFlowerHell</link>               
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+    </section>
+</chapter>

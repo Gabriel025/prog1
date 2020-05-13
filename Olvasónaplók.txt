@@ -1,0 +1,84 @@
+PICI:
+
+-számítógépes programozási nyelvek három szintje: gépi nyelv, assembly szintű nyelv, magas szintű nyelv
+
+-a könyv a magas szintű programozási nyelvek jellemzőiről, nyelvi eszközeiről, használatáról szól
+
+
+-a magas szintű nyelveken megírt programot forráskódnak nevezzük
+-forráskódot hardver közvetlenül nem tud futtatni, ehhez a forráskódot gépi nyelvbeli parancsokká kell alakítani
+-két módszer: fordítás, interpretálás (ezeket együttesen is lehet alkalmazni)
+-a magas szintű programozási nyelvek nem függnek az adott eszköz architektúrájától,
+ így nem kell egy programot sokszor megírni, ezeknek a különbségeknek a kezelése
+ a programok fordítására/értelmezésére szolgáló eszközkészletek feladata
+
+
+-minden programnyelvnél fontos a nyelv szintaktikai és szemantikai szabályainak pontos meghatározása
+-ezt hivatkozási nyelvnek hívjuk
+
+-az így meghatározott nyelv értelmezését adott platformon megvalósító programok a nyelv implementációi
+
+
+
+-a típus, mint absztrakt nyelvi eszköz: tartomány, műveletek, reprezentáció
+-új típusok definiálása
+-egyszerű és összetett adattípusok
+
+-mutató típusok
+
+-nevesített konstansok, változók
+
+
+
+
+
+
+
+
+
+
+
+K&R: A C programozási nyelv
+
+Brian Kernighan és Dennis Ritchie A C programozási nyelv című könyvének mindmáig igen meghatározó szerepe van, hiszen
+ezzel a könyvvel robbant be a köztudatba a C, mely ma is az egyik legelterjedtebb programnyelv.
+(Bár már sok nyelv megelőzte, melyek fordító/futtató környezetei viszont -ironikusan- sok esetben C-re alapulnak (pl. Python))
+
+A könyv első kiadásában leírt nyelvi szabályok a C legkorábbi változatára vonatkoznak, erre a "szabványra" általában K&R C-ként hivatkoznak (ez az "eredeti C").
+Ezt a szabványt a későbbiekben követték az ANSI C(/C89), a C99, a C11, és legújabban a C18 szabványok.
+
+A könyv első fejezete egy egyszerű "Hello world!" program bemutatásával indul. Megemlítendő, hogy Kerninghan és Ritchie álltak elő először a "Helló Világ!" ötlettel,
+mely azóta is igen gyakran jelenik meg programnyelvek/környezetek első bemutatásaként.
+Tovább olvasva egyszerű példákon keresztül megismerhetjük a C nyelv által nyújtott főbb lehetőségeket: a változókat (és ezzel együtt a C típuskezelését),
+aritmetikai kifejezéseket, sztringeket, tömböket, szimbolikus állandókat, elágazásokat, ciklusokat, függvényeket, és az stdio.h könyvtárat.
+Mindezt a további fejezetekben részletezi a könyv.
+
+
+Egy C program alapvető szerkezeti egységei a függvények. Mindaz a kód, ami fordítás során tényleges utasításokat eredményez, függvényekbe van foglalva,
+ezeken az egységeken kívül csak include-ok, illetve globális változók, függvények és szimbolikus állandók deklarációi szerepelnek.
+Egy függvénynek van visszatérési értéke, neve, argumentumlistája és teste, megyet egy kapcsoszárójelek közötti ún. blokkban helyezünk el (ezek a blokkok a vezérlő utasításoknál is fontosak lesznek).
+Minden függvényargumentum érték szerint kerül átadásra, cím szerinti ádatásra mutató típusok segítségével van lehetőségünk.
+C-ben, néhány más programnyelvvel ellentétben, a függvények és az eljárások nincsenek megkülönböztetve; ha azt akarjuk, hogy egy függvény ne térjen vissza semmilyen értékkel,
+a void speciális típust használjuk.
+Egy C program futása a main() függvénynél indul, ennek a függvénynek a megléte nélkül nem tudunk futtatható állományt létrehozni.
+
+Egy program változói szigorúan rendelkeznek típussal. A változók típusa fontos szemantikai információt hordoz, hiszen a fordítóprogam ez alapján tudja eldönteni,
+hogy mekkora memóriaterületet tartson fenn egy értéknek, illetve, hogy miként kezelje a tárolt értékeket pl. aritmetikai utasításokban. Implicit (jelöletlen) módon csak
+néhány esetben végezhetünk értékadást illetve aritmetikai műveleteket eltérő típusú változók között, alapesetben ilyenkor jelölnünk kell a konverziót (cast).
+Megemlítendők a mutató típusok, melyek szemantikailag egy memóriacímet képviselnek, a tömbök, melyek több azonos típusú és logikailag összetartozó érték egyszerű tárolását teszik lehetővé, illetve
+a struktúrák, melyek adott esetben különböző típusú változók jól meghatározott sorozatát foglalják egy egységbe.
+
+A C nyelv számos vezérlési szerkezetet nyújt a program futásának irányítására. Megjelennek a mára teljesen természetessé vált if - else if - else elágazások,
+a switch - case utasítások, a while és for cikusszervező utasítások, de van lehetőségünk, az Assembly világára emlékeztető módon, címkéket és ugrásokat (goto) használni (bár ezek gyakorlatban igen ritkán jelennek meg).
+
+
+
+
+BME C++:
+
+
+
+
+Python bevezetés:
+
+

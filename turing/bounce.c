@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     pos_x = pos_y = 0;
     vel_x = vel_y = 1;
 
-    while(true)
+    while(TRUE)
     {
         pos_x += vel_x;
         pos_y += vel_y;

@@ -1,0 +1,69 @@
+<revhistory xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0" xml:lang="hu">
+    <revision>
+        <revnumber>0.0.1</revnumber>
+        <date>2019-02-12</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            Az iniciális dokumentum szerkezetének kialakítása.
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.2</revnumber>
+        <date>2019-02-14</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            Inciális feladatlisták összeállítása.
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.3</revnumber>
+        <date>2019-02-16</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            Feladatlisták folytatása.
+            Feltöltés a BHAX csatorna 
+            <link xlink:href="https://gitlab.com/nbatfai/bhax">https://gitlab.com/nbatfai/bhax</link>
+            repójába.
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.4</revnumber>
+        <date>2019-02-19</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            A Brun tételes feladat kidolgozása.
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.5</revnumber>
+        <date>2020-03-02</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            Az Chomsky/a<superscript>n</superscript>b<superscript>n</superscript>c<superscript>n</superscript> 
+            és Caesar/EXOR csokor feladatok kiírásának aktualizálása (a heti előadás és laborgyakorlatok támogatására).
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.6</revnumber>
+        <date>2020-03-21</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            A MALMÖ projektes feladatok átvezetése, minden csokor utolsó feladata Minecraft ágensprogramozás ezzel. Mottók aktualizálása.
+            Prog1 feladatok aktuzalizálása. Javasolt (soft skill) filmek, elméletek, könyvek, előadások be.
+        </revremark>
+    </revision>
+
+    <revision>
+        <revnumber>0.0.7</revnumber>
+        <date>2020-03-22</date>
+        <authorinitials>nbatfai</authorinitials>
+        <revremark>
+            Javítások.
+        </revremark>
+    </revision>
+</revhistory>

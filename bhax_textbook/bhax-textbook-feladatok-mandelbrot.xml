@@ -1,0 +1,309 @@
+<chapter xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0" xml:lang="hu">
+    <info>
+        <title>Helló, Mandelbrot!</title>
+    </info>
+
+    <section xml:id="bhax-textbook-feladatok-mandelbrot.Mandelbrot">
+        <title>A Mandelbrot halmaz</title>
+        <para>
+            Írj olyan C programot, amely kiszámolja a Mandelbrot halmazt!
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/gvaqijHlRUs">https://youtu.be/gvaqijHlRUs</link>
+        </para>
+        <para>
+            Megoldás forrása:
+ <link xlink:href="../../../bhax/attention_raising/CUDA/mandelpngt.c++">
+                <filename>bhax/attention_raising/CUDA/mandelpngt.c++</filename>
+            </link> nevű állománya.
+        </para>
+        <figure>
+            <title>A Mandelbrot halmaz a komplex síkon</title>
+            <mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/mandel.png" scale="25"/>
+                </imageobject>
+                <textobject>
+                    <phrase>A Mandelbrot halmaz a komplex síkon</phrase>
+                </textobject>
+            </mediaobject>
+        </figure>
+        <para>
+            A Mandelbrot halmazt 1980-ban találta meg Benoit Mandelbrot a 
+            komplex számsíkon. Komplex számok azok a számok, amelyek körében 
+            válaszolni lehet az olyan egyébként értelmezhetetlen kérdésekre, 
+            hogy melyik az a két szám, amelyet összeszorozva -9-et kapunk, 
+            mert ez a szám például a 3i komplex szám.
+        </para>
+        <para>
+            A Mandelbrot halmazt úgy láthatjuk meg, hogy a sík origója középpontú 4 
+            oldalhosszúságú négyzetbe lefektetünk egy, mondjuk 800x800-as 
+            rácsot és kiszámoljuk, hogy a rács pontjai mely komplex számoknak 
+            felelnek meg. A rács minden pontját megvizsgáljuk a 
+            z<subscript>n+1</subscript>=z<subscript>n</subscript>
+            <superscript>2</superscript>+c, 
+            (0&lt;=n) képlet alapján úgy, hogy a c az éppen vizsgált rácspont. 
+            A z0 az origó. Alkalmazva a képletet a 
+        </para>
+        <itemizedlist>
+            <listitem>
+                <para>
+                    z<subscript>0</subscript> = 0
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    z<subscript>1</subscript> = 0<superscript>2</superscript>+c = c
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    z<subscript>2</subscript> = c<superscript>2</superscript>+c
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    z<subscript>3</subscript> = (c<superscript>2</superscript>+c)<superscript>2</superscript>+c
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    z<subscript>4</subscript> = ((c<superscript>2</superscript>+c)<superscript>2</superscript>+c)<superscript>2</superscript>+c
+                </para>
+            </listitem>
+            <listitem>
+                <para>
+                    ... s így tovább.
+                </para>
+            </listitem>
+        </itemizedlist>
+        <para>
+            Azaz kiindulunk az origóból (z<subscript>0</subscript>) 
+            és elugrunk a rács első pontjába a z<subscript>1</subscript> = c-be, 
+            aztán a c-től függően a további z-kbe. Ha ez az utazás kivezet a 
+            2 sugarú körből, akkor azt mondjuk, hogy az a vizsgált rácspont 
+            nem a Mandelbrot halmaz eleme. Nyilván nem tudunk végtelen sok 
+            z-t megvizsgálni, ezért csak véges sok z elemet nézünk meg minden 
+            rácsponthoz. Ha eközben nem lép ki a körből, akkor feketére 
+            színezzük, hogy az a c rácspont a halmaz része. (Színes meg úgy 
+            lesz a kép, hogy változatosan színezzük, például minél későbbi 
+            z-nél lép ki a körből, annál sötétebbre). 
+        </para>
+<para>
+A feladat eredetileg C programot kér, amitől azonban a tényleges megoldás eltért. Érthető ez, mert a C-ben elérhető <code>libpng</code> igen alacsony szintű könyvtár,
+esetünkben elég kellemetlen lenne használni. Kíváncsiságból azért utánajártam, hogy hogy is néz ki a PNG formátum, szép feladatot lehetne belőle csinálni,
+hogy hogyan is lehet egyszerű PNG képeket építeni bájtról bájtra.
+</para>
+<para>
+Ám ez az eredeti feladattól egészen messzire vinne, így végül elvetettem a "találjuk fel újra a PNG-t" ötletet. Egy kevés keresgélés után viszont találtam
+nem is egy könnyen implementálható képfájl-formátumot; olyanokat, amik pont arra jók, hogy nyers színadatokat dobáljunk bele
+(hiszen tömörítésre, checksumokra, stb. most nincs szükségünk). Ezek közül a Netpbm-et találtam a legmegfelelőbbnek, azon belül is a <code>.pgm</code> (Portable GreyMap) típust. Csináltam tehát az ilyen fájlok írásához egy egyszerű implementációt.
+</para>
+<para>
+Kisebb kitérő után tehát meglett a megoldás egyszerű képfájlok létrehozására. Innentől már csak számolni kellett egy keveset, és meg is jelent a Mandelbrot-halmaz a szemeim előtt.
+</para>
+<programlisting language="c"><xi:include href="../mandelbrot/mandelbrot.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+    </section>
+
+    <section>
+        <title>A Mandelbrot halmaz a <filename>std::complex</filename> osztállyal</title>
+        <para>
+            Írj olyan C++ programot, amely kiszámolja a Mandelbrot halmazt!
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/gvaqijHlRUs">https://youtu.be/gvaqijHlRUs</link>
+        </para>
+        <para>
+            Megoldás forrása: BHAX repó, <link xlink:href="https://gitlab.com/nbatfai/bhax/-/blob/master/attention_raising/Mandelbrot/3.1.2.cpp">https://gitlab.com/nbatfai/bhax/-/blob/master/attention_raising/Mandelbrot/3.1.2.cpp</link>
+        </para>
+        <para>
+A <link xlink:href="#bhax-textbook-feladatok-mandelbrot.Mandelbrot">Mandelbrot halmaz</link> pontban vázolt
+ismert algoritmust valósítja meg a repó <link xlink:href="../../../bhax/attention_raising/Mandelbrot/3.1.2.cpp">
+                <filename>bhax/attention_raising/Mandelbrot/3.1.2.cpp</filename>
+            </link> nevű állománya.
+        </para>
+        <programlisting language="c++"><xi:include href="../mandelbrot/mandelbrotpp.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+    </section>
+
+    <section>
+        <title>Biomorfok</title>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/IJMbgRzY76E">https://youtu.be/IJMbgRzY76E</link>
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://gitlab.com/nbatfai/bhax/tree/master/attention_raising/Biomorf">https://gitlab.com/nbatfai/bhax/tree/master/attention_raising/Biomorf</link>
+        </para>
+        <para>
+            A biomorfokra (a Julia halmazokat rajzoló bug-os programjával) 
+            rátaláló Clifford Pickover azt hitte természeti törvényre 
+            bukkant: <link xlink:href="https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf">https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf</link> (lásd a 2307. oldal aljától).
+        </para>       
+        <para>
+            A különbség a <link xlink:href="#bhax-textbook-feladatok-mandelbrot.Mandelbrot">Mandelbrot halmaz</link>
+            és a Julia halmazok között az, hogy a komplex iterációban az előbbiben a c változó, utóbbiban pedig állandó. 
+            A következő Mandelbrot csipet azt mutatja, hogy a c befutja a vizsgált összes rácspontot.
+        </para>
+        <programlisting language="c++">
+<![CDATA[  // j megy a sorokon
+  for ( int j = 0; j < magassag; ++j )
+    {
+      for ( int k = 0; k < szelesseg; ++k )
+        {
+
+          // c = (reC, imC) a halo racspontjainak
+          // megfelelo komplex szam
+
+          reC = a + k * dx;
+          imC = d - j * dy;
+          std::complex<double> c ( reC, imC );
+
+          std::complex<double> z_n ( 0, 0 );
+          iteracio = 0;
+
+          while ( std::abs ( z_n ) < 4 && iteracio < iteraciosHatar )
+            {
+              z_n = z_n * z_n + c;
+
+              ++iteracio;
+            }
+]]>
+        </programlisting>
+        <para>
+            Ezzel szemben a Julia halmazos csipetben a cc nem változik, hanem minden vizsgált
+            z rácspontra ugyanaz.
+        </para>
+        <programlisting language="c++">
+<![CDATA[    // j megy a sorokon
+    for ( int j = 0; j < magassag; ++j )
+    {
+        // k megy az oszlopokon
+        for ( int k = 0; k < szelesseg; ++k )
+        {
+            double reZ = a + k * dx;
+            double imZ = d - j * dy;
+            std::complex<double> z_n ( reZ, imZ );
+
+            int iteracio = 0;
+            for (int i=0; i < iteraciosHatar; ++i)
+            {
+                z_n = std::pow(z_n, 3) + cc;
+                if(std::real ( z_n ) > R || std::imag ( z_n ) > R)
+                {
+                    iteracio = i;
+                    break;
+                }
+            }
+]]>
+        </programlisting>
+        <para>
+            A bimorfos algoritmus pontos megismeréséhez ezt a cikket javasoljuk: 
+            <link xlink:href="https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf">https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf</link>.
+            Az is jó gyakorlat, ha magából ebből a cikkből from scratch kódoljuk be a sajátunkat, de mi a királyi úton járva a 
+            korábbi <link xlink:href="#bhax-textbook-feladatok-mandelbrot.Mandelbrot">Mandelbrot halmazt</link> kiszámoló 
+            forrásunkat módosítjuk. Itt van tehát a módosított iterációs függvény:
+        </para>
+        <programlisting language="c">
+<![CDATA[
+unsigned char biomorph_iter(complexd z, complexd c, unsigned int max_iter)
+{
+    unsigned char result = 0;
+    
+    for(unsigned int i = 1; i <= max_iter; i++)
+    {
+        
+        double re2 = z.re * z.re;
+        double im2 = z.im * z.im;
+        /*if(re2 + im2 > 4)
+        {
+            result = 1 + i * 254 / max_iter;
+            break;
+        }*/
+        if(z.re * z.re + z.im * z.im > 100) break;
+        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
+
+        //(a+bi)^2 + c + di = a*a-b*b+c + (2*a*b+d)*i 
+        z.im = 2 * z.re * z.im + c.im;
+        z.re = re2 - im2 + c.re;
+        
+
+        /*
+        if(z.re * z.re + z.im * z.im > 100) break;
+        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
+
+        complexd z_next = {z.re * (z.re*z.re - 3*z.im*z.im) + c.re, z.im * (3*z.re*z.re - z.im*z.im) + c.im};
+        z = z_next;
+        */
+    }
+
+    if(!((z.re > -10 && z.re < 10) || (z.im > -10 && z.im < 10)))
+        result = 255;
+
+    return result;
+}
+]]>
+        </programlisting>
+        <mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/radiolarian.png" scale="25"/>
+                </imageobject>
+                <textobject>
+                    <phrase>A Radiolarian névre hallgató biomorf képe</phrase>
+                </textobject>
+            </mediaobject>
+    </section>
+
+    <section>
+        <title>A Mandelbrot halmaz CUDA megvalósítása</title>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/gvaqijHlRUs">https://youtu.be/gvaqijHlRUs</link>
+        </para>
+        <para>
+            Megoldás forrása:
+ <link xlink:href="../../../bhax/attention_raising/CUDA/mandelpngc_60x60_100.cu">
+                <filename>bhax/attention_raising/CUDA/mandelpngc_60x60_100.cu</filename>
+            </link> nevű állománya.
+        </para>
+    </section>
+
+    <section>
+        <title>Mandelbrot nagyító és utazó C++ nyelven</title>
+        <para>
+            Építs GUI-t a Mandelbrot algoritmusra, lehessen egérrel nagyítani egy területet, illetve egy pontot
+            egérrel kiválasztva vizualizálja onnan a komplex iteréció bejárta z<subscript>n</subscript> komplex számokat!
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href=""></link>
+            Illetve <link xlink:href="https://bhaxor.blog.hu/2018/09/02/ismerkedes_a_mandelbrot_halmazzal">https://bhaxor.blog.hu/2018/09/02/ismerkedes_a_mandelbrot_halmazzal</link>.
+        </para>
+        <para>
+            Megoldás forrása: az ötödik előadás <link xlink:href="https://arato.inf.unideb.hu/batfai.norbert/UDPROG-BHAX/Prog1_5.pdf">26-33 fólia</link>, 
+            illetve <link xlink:href="https://sourceforge.net/p/udprog/code/ci/master/tree/source/binom/Batfai-Barki/frak/">https://sourceforge.net/p/udprog/code/ci/master/tree/source/binom/Batfai-Barki/frak/</link>.
+        </para>
+<programlisting language="c++"><xi:include href="../mandelbrot/QtMandelbrot/main.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+    </section>
+
+    <section>
+        <title>Mandelbrot nagyító és utazó Java nyelven</title>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/Ui3B6IJnssY">https://youtu.be/Ui3B6IJnssY</link>, 4:27-től.
+            Illetve <link xlink:href="https://bhaxor.blog.hu/2018/09/02/ismerkedes_a_mandelbrot_halmazzal">https://bhaxor.blog.hu/2018/09/02/ismerkedes_a_mandelbrot_halmazzal</link>.
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://www.tankonyvtar.hu/hu/tartalom/tkt/javat-tanitok-javat/apbs02.html#id570518">https://www.tankonyvtar.hu/hu/tartalom/tkt/javat-tanitok-javat/apbs02.html#id570518</link>
+        </para>
+    </section>
+
+    <section>
+        <title>Vörös Pipacs Pokol/fel a láváig és vissza</title>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/I6n8acZoyoo">https://youtu.be/I6n8acZoyoo</link>
+        </para>
+        <para>
+            Megoldás forrása: <link xlink:href="https://github.com/nbatfai/RedFlowerHell">https://github.com/nbatfai/RedFlowerHell</link>
+        </para>
+        <para>
+            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
+            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+        </para>
+    </section>
+</chapter>

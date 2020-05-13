@@ -8,28 +8,28 @@ int main(int argc, char **argv)
     printf("Enter two integers: ");
     scanf("%d %d", &a, &b);
 
-    //classic swap with 3d variable
+    //Klasszikus megoldás segédváltozóval:
     c = a;
     a = b;
     b = c;
     printf("swapped: %d %d\n", a, b);
 
-    //with subtraction
+    //Kivonással:
     a -= b;
     b += a;
     a = b - a;
     printf("swapped back: %d %d\n", a, b);
 
-    //with bitwise XOR
-    a ^= b; //11101100 01011100 -> 10110000 01011100
-    b ^= a; //10110000 01011100 -> 10110000 11101100
-    a ^= b; //10110000 11101100 -> 01011100 11101100
+    //Bitenkénti XOR-ral:
+    a ^= b;
+    b ^= a;
+    a ^= b;
     printf("swapped: %d %d\n", a, b);
 
-    //slow, unsafe but why not
+    //Lassú, nem túl biztonságos, de ha nagyon akarjuk, ilyet is lehet:
     char buffer[32];
 
-    snprintf(buffer, sizeof(char) * 32, "%d %d", b, a);
+    snprintf(buffer, 32, "%d %d", b, a);
     sscanf(buffer, "%d %d", &a, &b);
     printf("swapped back: %d %d\n", a, b);
 

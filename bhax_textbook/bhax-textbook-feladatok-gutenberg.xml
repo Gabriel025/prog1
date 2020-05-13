@@ -1,0 +1,41 @@
+<chapter xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0" xml:lang="hu">
+    <info>
+        <title>Helló, Gutenberg!</title>
+        <cover>
+            <para>
+                Programozás tankönyvek rövid olvasónaplói.
+            </para>
+        </cover>
+    </info>
+
+    <section>
+        <title>Programozási alapfogalmak</title>
+        <para>         
+            Rövid olvasónapló a <citation>PICI</citation> könyvről.
+        </para>
+    </section>
+
+    <section>
+        <title>C programozás bevezetés</title>
+        <para>
+            Rövid olvasónapló a <citation>KERNIGHANRITCHIE</citation> könyvről.
+        </para>
+        <para>
+            Megoldás videó: <link xlink:href="https://youtu.be/zmfT9miB-jY">https://youtu.be/zmfT9miB-jY</link>
+        </para>
+    </section>
+
+    <section>
+        <title>C++ programozás</title>
+        <para>
+            Rövid olvasónapló a <citation>BMECPP</citation> könyvről.
+        </para>
+    </section>
+
+    <section>
+        <title>Python nyelvi bevezetés</title>
+        <para>
+            Rövid olvasónapló a <citation>BMEPY</citation> könyvről.
+        </para>
+    </section>
+</chapter>
