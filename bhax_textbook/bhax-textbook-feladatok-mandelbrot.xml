@@ -122,7 +122,7 @@ ismert algoritmust valósítja meg a repó <link xlink:href="../../../bhax/atten
                 <filename>bhax/attention_raising/Mandelbrot/3.1.2.cpp</filename>
             </link> nevű állománya.
         </para>
-        <programlisting language="c++"><xi:include href="../mandelbrot/mandelbrotpp.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        <programlisting language="c++"><xi:include href="../mandelbrot/mandelbrotcpp.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
     </section>
 
     <section>
