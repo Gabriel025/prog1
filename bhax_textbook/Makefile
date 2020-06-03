@@ -10,7 +10,6 @@ validate_bhax-textbook_fdl_hu:
 	wget -O schema.rng http://docbook.org/xml/5.0/rng/docbookxi.rng
 	xmllint --xinclude bhax-textbook-fdl.xml --output output.xml
 	xmllint --noout --relaxng schema.rng output.xml
-	rm -f output.xml schema.rng
 	
 .PHONY: clean
 clean:

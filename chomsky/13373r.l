@@ -24,11 +24,6 @@ char *to[20] =  {"\\/\\/", "3", "7", "2", "1", "0", "|°", "4", "5", "|)", "9", 
 
 %%
 
-int yywrap()
-{
-    return 1;
-}
-
 int main(int argc, char **argv)
 {
     yylex();

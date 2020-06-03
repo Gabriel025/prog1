@@ -10,24 +10,50 @@
 class neural_net
 {
 public:
-    neural_net(std::vector<unsigned int> const& topology);
-    neural_net(neural_net& other);
+    neural_net(const std::vector<unsigned int>& topology = std::vector<unsigned int>());
+    neural_net(const neural_net& other);
     neural_net(neural_net&& other);
     ~neural_net();
 
-    neural_net& operator=(neural_net& other);
+    neural_net& operator=(const neural_net& other);
     neural_net& operator=(neural_net&& other);
 
-    std::vector<double>& feed_forward(std::vector<double> const& input);
-    std::vector<double>& back_propagate(std::vector<double> const& output);
-    std::vector<float> output() const; //a range specified by input iterators would work well as a return type
+    std::vector<double> input() const;
+    std::vector<double>::const_iterator input_begin() const; //Iterátorok arra az esetre, ha nincs szükségünk másolásra
+    std::vector<double>::const_iterator input_end() const;
+    void feed_input(const std::vector<double>& input);
+
+    std::vector<double> output() const;
+    std::vector<double>::const_iterator output_begin() const;
+    std::vector<double>::const_iterator output_end() const;
+    void back_propagate(const std::vector<double>& output);
 
 private:
+    /* Példa topológára: 3 4 3 2
+       Értelmezés: 3+1 bemeneti neuron, egy rejtett réteg 4+1 neuronnal,
+                   mégegy rejtett réteg 3+1 neuronnal, 2 kimeneti neuron
+                   (a +1 neuronok az eltolósúly-értékekhez kellenek (bias))
+    */
+    std::vector<unsigned int> topology;
 
-    std::vector<layer> layers;
+protected:
+    /* Dolgozhatnánk nyers dinamikus tömbökkel is, de nem C-ben vagyunk, nem szükséges.
+       (A teljesítményre nincs számottevő hatással, a közvetlen elérés miatt,
+       ráadásul így nem kell memóriát kezelnünk) */
+    typedef std::pair<double, std::vector<double>> neuron;
+    typedef std::vector<neuron> layer;
+
+    std::vector<layer> neurons;
+
+    double neuron_value(int layer, int neuron) const;
+    void set_neuron_value(int layer, int neuron, double value);
+
+    double weight_value(int layer_from, int neuron_from, int neuron_to) const;
+    void set_weight_value(int layer_from, int neuron_from, int neuron_to, double weight);
 };
 
 int main(int argc, char **argv)
 {
 
+    return 0;
 }

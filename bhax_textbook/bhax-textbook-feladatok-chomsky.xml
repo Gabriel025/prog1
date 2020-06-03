@@ -235,10 +235,73 @@ struct buffer *foo = malloc(sizeof(struct buffer) + foo_len);
             Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
             Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
         </para>
-        <para>Keressünk hexadecimális értékeket is, miért is ne.</para>
+        <para>
+        A Lex(/Flex) segítségével igen könnyen generálhatunk C lexikális elemzőket. Bár ehhez a feladathoz talán túlzás
+        nagyágyúkat használni, bevezetésnek hasznos lehet. A lexerünk forrása három <code>%%</code>-al elválasztott
+        részből áll, és az alábbiak szerint épül fel:
+        </para>
         <programlisting language="c">
-<xi:include href="../chomsky/realnums.l" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<![CDATA[
+%{
+    /* C kód (tipikusan include-ok és szükséges deklarációk) */
+%}
+
+/* Definíciók, lexer opciók */
+
+%%
+
+/* Szabályok */
+
+%%
+
+/* Szokásos C kód; a main() és minden egyéb ide kerül */
+]]>
         </programlisting>
+        <para>
+        Az első részben include-olunk, deklarálunk két globális változót, és reguláris kifejezésekkel definiálunk két mintát
+        (mindössze a későbbi olvashatóság érdekében):
+        </para>
+        <para>(A program hexadecimális értékeket is keres, miért is ne.)</para>
+        <programlisting language="c">
+<![CDATA[
+%{
+#include <stdio.h>
+#include <stdlib.h>
+int realnums = 0, hexnums = 0;
+%}
+
+real_literal    0[xX]([0-9A-F]+|[0-9a-f]+)
+hex_literal     [+-]?[0-9]*\.?[0-9]+
+]]>
+        </programlisting>
+<para>
+A második részben szabályokat határozunk meg, ezt regexekkel, illetve fentebb definiált mintákkal tehetjük meg. A sor a minta
+leírásával kezdődik, majd utána egy C kód blokkal, ami megadja, hogy az adott minta megtalálásakor mit akarunk csinálni (A <code>yytext</code> a jelenleg megtalált minta szövege).
+(Megjegyzésként, leggyakrabban lexereket "tokenizálásra" használunk, ilyenkor a kód általában <code>{ return &lt;szimbolikus konstans&gt;; }</code> alakú.)
+</para>
+<programlisting language="c">
+<![CDATA[
+{real_literal}      { hexnums++; printf("hex  number found: %s %ld\n", yytext, strtol(yytext, NULL, 0)); }
+{hex_literal}       { realnums++; printf("real number found: %s %f\n", yytext, atof(yytext)); }
+.|\n ;
+]]>
+</programlisting>
+<para>
+A harmadik részben már csak egy main()-re van szükségünk. Itt egyszerűen meghívjuk a lexerünket (<code>yylex()</code>), majd
+amikor az visszatér (a bemenet végén), kiírjuk, mennyi valós számot/hex számot találtunk.
+</para>
+<programlisting language="c">
+<![CDATA[
+int main(int argc, char **argv)
+{
+    yylex();
+
+    printf("number of reals in input: %d\nnumber of hex values in input: %d\n", realnums, hexnums);
+
+    return 0;
+}
+]]>
+</programlisting>
     </section>
 
     <section>
@@ -363,16 +426,42 @@ loop_end:
 for(i=0; i<5; tomb[i] = i++)
 ]]>
 </programlisting>
+<para>
+Ez a csipet meghatározatlan viselkedéshez vezet (undefined behavior),
+mivel a C standardek (itt teljesen mindegy, melyikről beszélünk)
+nem határozzák meg a részkifejezések értelmezésének helyes sorrendjét (néhány kivételtől eltekintve, pl. &amp;&amp;, ||).
+</para>
+<para>
+Így, ha szemléletesen megpróbáljuk kibontani a <code>tomb[i] = i++</code> értékadó kifejezést, több helyes változatot is kaphatunk:
+</para>
+<programlisting language="c">
+<![CDATA[
+tomb[i] = i;
+i += 1;
 
+int rhs = i++;
+tomb[i] = rhs;
+]]>
+</programlisting>
+<para>
+Ezek a változatok viszont eltérő eredményhez vezetnek.
+</para>
 </listitem>
 <listitem>
 
 <programlisting language="c">
 <![CDATA[
-for(i=0; i<n && (*d++ = *s++); ++i) //= helyett == kellene; így is lefordítható, de nincs sok haszna
+for(i=0; i<n && (*d++ = *s++); ++i)
 ]]>
 </programlisting>
-
+<para>
+Ez tipikus esete lehet a "== helyett használt =" elírásnak; így is lefordítható, de nincs sok haszna.
+</para>
+<para>
+Ezen felül, az előző példához hasonlóan meghatározatlan a ++-ok kiértékelésének sorrendje,
+amelyek ráadásul itt mutatókat inkrementálnak (az operátorok erősorrendje alapján).
+Bármit is akarna jelenteni ez a csipet, ilyen formában rengeteg veszélyes hibához vezethet.
+</para>
 </listitem>
 <listitem>
 
@@ -381,7 +470,13 @@ for(i=0; i<n && (*d++ = *s++); ++i) //= helyett == kellene; így is lefordíthat
 printf("%d %d", f(a, ++a), f(++a, a));
 ]]>
 </programlisting>
-
+<para>Két függvényértékként kapott integert írunk ki... A gond csak azzal van,
+hogy, ismét a ++ miatt, meghatározatlan, hogy ezek a függvények milyen értékeket kapnak paraméterként.</para>
+<para>Megjegyzésként, több csipetben is láttuk, hogy bizonyos operátorok
+"mellékhatásai" (a kifejezés változat a program állapotán) sok kellemetlenséget okozhatnak. Minden esetben érdemes odafigyelni,
+hogy a program mely pontjai hagynak változásokat maguk után, főleg, hogyha ezt rejtve teszik meg
+(pl. ha egy függvény változtat egy mutatón keresztül átadott változó értékén). Ilyen esetek egyértelműsítéséhez
+nyújt segítséget a <code>const</code> kulcsszó. (Főleg C++-ban, lásd const correctness)</para>
 </listitem>
 <listitem>
 
@@ -399,7 +494,7 @@ printf("%d %d", f(a), a);
 printf("%d %d", f(&a), a);
 ]]>
 </programlisting>
-
+<para>Mindaddig nincs probléma, amíg <code>f()</code> nem változtat <code>a</code> értékén (amit ugyebár mutatón keresztül adunk át).</para>
 </listitem>
 </orderedlist>
     </section>

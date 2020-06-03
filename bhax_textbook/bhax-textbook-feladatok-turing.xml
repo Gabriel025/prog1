@@ -13,11 +13,12 @@
             Megoldás videó: <link xlink:href="https://youtu.be/lvmi6tyz-nI">https://youtu.be/lvmi6tyz-nI</link>
         </para>
         <para>
-            Megoldás forrása: <link xlink:href="Turing/infty-f.c">
-                <filename>bhax/thematic_tutorials/bhax_textbook_IgyNeveldaProgramozod/Turing/infty-f.c</filename>
-            </link>, 
-            <link xlink:href="Turing/infty-w.c">
-                <filename>bhax/thematic_tutorials/bhax_textbook_IgyNeveldaProgramozod/Turing/infty-w.c</filename>
+            Megoldás forrása: <link xlink:href="Turing/spin.c">
+                <filename>turing/spin.c</filename>
+            </link>, <link xlink:href="Turing/idle.c">
+                <filename>turing/idle.c</filename>
+            </link>, <link xlink:href="Turing/spin_all_cores.c">
+                <filename>turing/spin_all_cores.c</filename>
             </link>.
         </para>
         <para>
@@ -48,6 +49,17 @@
             Minden mag 100 százalékban (az OMP-s megoldásnál kicsit explicitebb módon, POSIX szálakkal; persze az eredmény lényegében ugyanaz):
         </para>
 	<programlisting language="c"><xi:include href="../turing/spin_all_cores.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        <para>
+Ha a fenti programokra ránézünk a <command>top</command> parancs kimenetében, láthatjuk, hogy tényleg a várt módon használják a CPU-t.
+        </para>
+            <mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/2-1-top.png" scale="90"/>
+                </imageobject>
+                <textobject>
+                    <phrase>Egy kivágás a top parancs kimenetéből</phrase>
+                </textobject>
+            </mediaobject>
         <tip>
             <title>Werkfilm</title>
             <itemizedlist>
@@ -156,7 +168,34 @@ false]]></screen>
         <para>
             Megoldás videó: <link xlink:href="https://bhaxor.blog.hu/2018/08/28/10_begin_goto_20_avagy_elindulunk">https://bhaxor.blog.hu/2018/08/28/10_begin_goto_20_avagy_elindulunk</link>
         </para>
-	<programlisting language="c"><xi:include href="../turing/swap.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+<para>A megszokott megoldás két változó értékének felcserélésére egy segédváltozó használata:</para>
+<programlisting language="c"><![CDATA[
+    int a, b;
+    /* ... */
+
+    int c = a;
+    a = b;
+    b = c;
+]]></programlisting>
+<para>Bizonyos típusú változókat kivonással is felcserélhetünk:</para>
+<programlisting language="c"><![CDATA[
+    a -= b;
+    b += a;
+    a = b - a;
+]]></programlisting>
+<para>Egy még érdekesebb (és a legtöbb típusra alkalmazható) megoldás a bitenkénti kizáró vagy:</para>
+<programlisting language="c"><![CDATA[
+    a ^= b;
+    b ^= a;
+    a ^= b;
+]]></programlisting>
+<para>Ezek mellett van lehetőségünk stringek használatára (noha ez ilyen formában a valóságban teljesen haszontalan):</para>
+<programlisting language="c"><![CDATA[
+    char buffer[32];
+
+    snprintf(buffer, 32, "%d %d", b, a);
+    sscanf(buffer, "%d %d", &a, &b);
+]]></programlisting>
     </section>
 
     <section>
@@ -170,12 +209,96 @@ false]]></screen>
             Megoldás videó: <link xlink:href="https://bhaxor.blog.hu/2018/08/28/labdapattogas">https://bhaxor.blog.hu/2018/08/28/labdapattogas</link>
         </para>
         <para>
-            Megoldás forrása:
+            Tanulságok, tapasztalatok, magyarázat...
         </para>
-	<para>if-ekkel:</para>
-	<programlisting language="c"><xi:include href="../turing/bounce.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
-	<para>if-ek nélkül:</para>
-	<programlisting language="c"><xi:include href="../turing/bounce_no_cond.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+	<para><emphasis>A feladat megoldása if-ekkel</emphasis></para>
+	<programlisting language="c"><![CDATA[
+#include <unistd.h>
+#include <ncurses.h>
+#include <math.h>
+
+int main(int argc, char **argv)
+{
+    initscr();
+    noecho();
+    curs_set(0);
+
+    int rows, cols, pos_x, pos_y, vel_x, vel_y;
+
+    pos_x = pos_y = 0;
+    vel_x = vel_y = 1;
+
+    while(TRUE)
+    {
+        pos_x += vel_x;
+        pos_y += vel_y;
+
+        getmaxyx(stdscr, rows, cols); //Ha netán átméretezik a terminált, ne okozzon gondot
+        if(pos_x > cols - 1) pos_x = cols - 1;
+        if(pos_y > rows - 1) pos_y = rows - 1;
+
+        if(pos_x < 1) vel_x *= -1;
+        if(pos_y < 1) vel_y *= -1;
+        if(pos_x >= cols - 1) vel_x *= -1;
+        if(pos_y >= rows - 1) vel_y *= -1;
+
+
+        clear();
+
+        mvaddch(pos_y, pos_x, 'O');
+
+        refresh();
+        usleep(100000);
+    }
+
+    endwin();
+
+    return 0;
+}
+]]></programlisting>
+    <para>
+Már ebben az egyszerű példában megjelenik a játékoknál (és nem is csak játékoknál) igen gyakori "main loop", ugyanis a programunk lényege egy cikluson belül van. Nagyon sok játéknak ugyanis végsősoron az a célja, hogy másodpercenként (optimális esetben) ~60 képkockát megrajzoljon, és két rajzolás közben ellenőrizze végigmenjen a játék logikáján. A mi esetünkben is valami ilyesmi történik, a while cikluson belül először léptetjük a labda pozícióját és frissítjük a sebességvektorát, majd rajzoljuk a képernyőre.
+    </para>
+<para>Itt egy képernyőkép a programról, és, hogy szemléletesebb legyen, kivettem belőle a képernyő törlését (clear függvény):</para>
+<mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/bounce.png" scale="90"/>
+                </imageobject>
+            </mediaobject>
+	<para><emphasis>Ugyanez if-ek nélkül</emphasis></para>
+<para>Ha nem használhatunk elágazásokat, újra kell gondolnunk a program azon részét, amely a labda pozíciójának határaival és a labda sebességével foglalkoznak:</para>
+	<programlisting language="c"><![CDATA[
+getmaxyx(stdscr, rows, cols);
+if(pos_x > cols - 1) pos_x = cols - 1;
+if(pos_y > rows - 1) pos_y = rows - 1;
+
+if(pos_x < 1) vel_x *= -1;
+if(pos_y < 1) vel_y *= -1;
+if(pos_x >= cols - 1) vel_x *= -1;
+if(pos_y >= rows - 1) vel_y *= -1;
+]]></programlisting>
+<para>Az átméretezéses részt cseréljük le egy modulo alapú megoldásra:</para>
+<programlisting language="c"><![CDATA[
+getmaxyx(stdscr, rows, cols);
+pos_x %= cols;
+pos_y %= rows;
+]]></programlisting>
+<para>A sebesség változtatását (a tényleges "pattogást") pedig oldjuk meg úgy, hogy a sebességvektor komponenseit megszorozzuk valamivel minden iterációban. Ennek a valaminek 1-nek kéne lennie alapesetben, és -1-nek, ha a terminál szélén vagyunk (tengelyenként külön véve). Vezessünk be ehhez egy függvényt:</para>
+<programlisting language="c"><![CDATA[
+vel_x *= is_within_bounds(pos_x, cols - 1);
+vel_y *= is_within_bounds(pos_y, rows - 1);
+]]></programlisting>
+<para>Már csak ezt a függvényt kell implementálni. Sok megoldást ki lehet találni a problémára, ez a változat az integerosztás sajátosságait használja fel:</para>
+<programlisting language="c"><![CDATA[
+//A visszatérési érték -1, ha n<=0 vagy n>=max, egyébként pedig 1
+int is_within_bounds(int n, int max)
+{
+    int upper = (n / max) * -2 + 1;
+    int lower = ((max - n) / max) * -2 + 1;
+
+    return upper * lower;
+}
+]]></programlisting>
     </section>
 
     <section>
@@ -194,18 +317,70 @@ A szóhossz, mint fogalom, alapvetően a jelen hardver
 "adatbuszának" a méretére utal (data bus - rémes dolog magyarul informatikáról beszélni).
 Ezt szoftveren keresztül nem triviális lekérdezni, bár rendszerinformációkon át
 el lehet hozzá jutni, de közvetlenül nem igazán van mód rá.
+</para>
+<para>
 Átfogalmazva a problémát, a gépi szó hossza megfelel annak az adatmennyiségnek,
 mellyel a processzor alapvetően egyszerre dolgozni tud (kerüljük ki a Single Instruction Multiple Data kérdéskörét),
 ami általában célszerűen egybeesik a főbb regiszterek méretével egy adott architektúrán.
 Ezt még mindg nem deríthető ki egyszerűen...
-
-A sizeof(int) saját olvasatom szerint nem ad pontos választ a szóhosszra,
+</para>
+<para>
+A sizeof(int) saját olvasatom szerint nem ad pontos képet a szóhosszról,
 többek között az én gépemen sem ad helyes választ.
 Egy jobb megoldás a pointerek méretének vizsgálata, mivel sok esetben
-a címek hossza megegyezik a gépi szó méretével.
-(Még ez a megoldás sem teljesen pontos)
+a címek hossza gyakran megegyezik a gépi szó méretével (bár még ez a megoldás sem teljesen pontos).
         </para>
-	<programlisting language="c"><xi:include href="../turing/bogomips.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+<programlisting language="c"><![CDATA[
+printf("sizeof(void*) = %zu .. * 8 = %u bits\n\n", sizeof(void*), (unsigned)sizeof(void*) * 8);
+]]></programlisting>
+<para>
+Rátérve a BogoMIPSre, a program alapja az alábbi függvény, amely egy üres ciklusnak megadott számú iterációját hajtja végre.
+A BOGOMips alapvetően kalibrálási célt szolgál (elsősorban az udelay/mdelay busy wait függvényekhez,
+régebben nagyobb szerepük volt), különböző processzorok összehasonlítására nem jó hasonlítási alap (nem véletlen a "bogo" előtag).
+Így esetünkben lényegtelen, hogy ez a ciklus pontosan, instrukcióról instrukcióra hogyan épül fel, és hogy adott architektúrán
+hogyan fut le.
+</para>
+	<programlisting language="c"><![CDATA[
+void spin(unsigned long long iter)
+{
+    for(; iter > 0; iter--);
+}
+]]>
+    </programlisting>
+<para>
+A <code>main()</code>-ben ezután, nagyságrendekben gondolkodva (2 hatványai), megkeressük a legkisebb <code>loops_per_sec</code>
+értéket, amelynél a <code>spin()</code> már tovább fut, mint 1 másodperc. Ha ez megvan, becslésként
+a kapott értéket elosztjuk a ténylegesen eltelt idővel.
+</para>
+    <programlisting language="c">
+<![CDATA[
+int main(int argc, char **argv)
+{
+    printf("*** Ténylegesen pontos BOGOMips értékekhez keresd fel a /proc/cpuinfo-t! ***\n");
+
+    unsigned long long loops_per_sec = 1;
+    unsigned long long mcsecs;
+
+    while(loops_per_sec <<= 1)
+    {
+        mcsecs = clock();
+        spin(loops_per_sec);
+        mcsecs = clock() - mcsecs;
+
+        if (mcsecs >= 1000000)
+        {
+            loops_per_sec = loops_per_sec / mcsecs * 1000000;
+            
+            printf("BOGOMips: %llu\n", loops_per_sec / 100000);
+
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
+]]></programlisting>
     </section>
 
     <section>
@@ -218,9 +393,146 @@ a címek hossza megegyezik a gépi szó méretével.
             Megoldás videó: <link xlink:href=""></link>
         </para>
         <para>
-        A megoldásomat megpróbáltam úgy felépíteni, hogy szépen látszódjon az elméleti anyagban leírt <code>x = Ax</code> iteráció:
+        A PageRank algoritmus volt a Google óriási sikerének egyik nagy tényezője. Egy igen elegáns, és matematikailag
+        robusztus megoldást kínál egy sokoldalú problémára az internetes keresés kérdéskörében:
         </para>
-	<programlisting language="c"><xi:include href="../turing/pagerank.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        <para>
+        Mely keresési eredmények jelenjenek meg az első találatok között?
+        </para>
+        <para>
+        A PageRank esetében ezt a problémát úgy közelítjük meg, hogy megvizsgáljuk az oldalakon található linkeket, pontosabban
+        azt, hogy ezen linkeket véletlenszerűen követve melyik oldalon mekkora eséllyel lyukadunk ki. Furcsának tűnhet elsőre,
+        de az így kapott valószínűségeknek máig is fontos szerepük van a keresőmotorok működésében (a neurális hálók egyre nagyobb térnyerése mellett).
+        </para>
+        <para>A módszer sikeréhez nagyban hozzájárul az, hogy mindez leképezhető mátrix sajátvektorainak kiszámítására, melyeket
+        egészen egyszerű iteratív módszerekkel megközelíteni.</para>
+        <para>
+        Az alábbi források részletesebben összefoglalják az elméleti hátteret:
+        </para>
+        <itemizedlist>
+        <listitem><para><link xlink:href="http://home.ie.cuhk.edu.hk/~wkshum/papers/pagerank.pdf">http://home.ie.cuhk.edu.hk/~wkshum/papers/pagerank.pdf</link></para></listitem>
+        <listitem><para><link xlink:href="https://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm">https://www.cs.princeton.edu/~chazelle/courses/BIB/pagerank.htm</link> (egy kissé eltérő megoldás)</para></listitem>
+        </itemizedlist>
+        <para>
+        A megoldásomat megpróbáltam úgy felépíteni, hogy szépen látszódjon az elméleti anyagban leírt <code>x = Ax</code> iterációja:
+        </para>
+        <programlisting language="c"><![CDATA[
+while(1)
+{
+    if (delta(4, PR, PR_prev) < 0.00001)
+        break;
+
+    //PageRank iteration:
+    Amulx(4, M, PR, PR_prev);
+    swap(PR, PR_prev, sizeof(PR));
+}
+]]>
+    </programlisting>
+    <para>
+    Ahol az <code>Amulx(n, A, x, result)</code> kiszámítja az A mátrix és az x vektor szorzatát
+    és a <code>delta(n, vec, prev_vec)</code> visszaadja két vektor különbségének a hosszát. (Implementáció lentebb)
+    </para>
+	<programlisting language="c"><![CDATA[
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+#include <unistd.h>
+
+void damp_matrix(int n, double mat[n][n], double d);
+void Amulx(int n, double A[n][n], double x[n], double result[n]);
+
+void swap(void *a, void *b, size_t len);
+double delta(int n, double vec[n], double prev_vec[n]);
+
+void print_array(int n, double array[n]);
+
+int main(void)
+{
+    /*
+        M[i][j] értéke aszerint alakul, hogy
+        az j sorszámú oldalon van-e a
+        i sorszámú oldalra mutató link.
+        M oszlopainak az összege 1
+    */
+    double M[4][4] = {
+        {0.0, 0.0, 0.33, 0.0},
+        {1.0, 0.0, 0.33, 1.0},
+        {0.0, 0.5, 0.00, 0.0},
+        {0.0, 0.5, 0.33, 0.0}
+    };
+
+    //"simítunk" a mátrixon (damping); ez egy egész gyakori módszer
+    //a "lógó" oldalak által okozott végeten ciklusok elkerülésére
+    damp_matrix(4, M, 0.85);
+
+    double PR[4] = {1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0};
+    double PR_prev[4] = {0.0, 0.0, 0.0, 0.0};
+
+    while(1)
+    {
+        if (delta(4, PR, PR_prev) < 0.00001)
+            break;
+
+        //PageRank iteration:
+        Amulx(4, M, PR, PR_prev);
+        swap(PR, PR_prev, sizeof(PR));
+    }
+
+    print_array(4, PR);
+    return 0;
+}
+
+
+
+void damp_matrix(int size, double mat[size][size], double d)
+{
+    for(int i = 0; i < size; i++)
+        for(int j = 0; j < size; j++)
+            mat[i][j] = d * mat[i][j] + (1.0 - d) / size;
+}
+
+void Amulx(int n, double A[n][n], double x[n], double result[n])
+{
+    for(int i = 0; i < n; i++)
+    {
+        result[i] = 0;
+        for(int j = 0; j < n; j++)
+            result[i] += A[i][j] * x[j];
+    }
+}
+
+double delta(int n, double vec[n], double prev_vec[n])
+{
+    double sum = 0.0;
+    for (int i = 0; i < n; i++)
+        sum += (vec[i] - prev_vec[i]) * (vec[i] - prev_vec[i]);
+    sum /= n;
+    
+    return sqrt(sum);
+}
+
+
+void swap(void *a, void *b, size_t len)
+{
+    char tmp;
+    char *ach = (char*)a;
+    char *bch = (char*)b;
+
+    for(size_t i = 0; i < len; i++)
+    {
+        tmp = ach[i];
+        ach[i] = bch[i];
+        bch[i] = tmp;
+    }
+}
+
+void print_array(int n, double array[n])
+{
+    for (int i = 0; i < n; i++)
+        printf("%f\n", array[i]);
+}
+]]></programlisting>
     </section>
 
     <section xml:id="bhax-textbook-feladatok-turing.MontyHall">

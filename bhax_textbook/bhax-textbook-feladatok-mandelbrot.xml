@@ -17,17 +17,6 @@
                 <filename>bhax/attention_raising/CUDA/mandelpngt.c++</filename>
             </link> nevű állománya.
         </para>
-        <figure>
-            <title>A Mandelbrot halmaz a komplex síkon</title>
-            <mediaobject>
-                <imageobject>
-                    <imagedata fileref="img/mandel.png" scale="25"/>
-                </imageobject>
-                <textobject>
-                    <phrase>A Mandelbrot halmaz a komplex síkon</phrase>
-                </textobject>
-            </mediaobject>
-        </figure>
         <para>
             A Mandelbrot halmazt 1980-ban találta meg Benoit Mandelbrot a 
             komplex számsíkon. Komplex számok azok a számok, amelyek körében 
@@ -88,7 +77,7 @@
             színezzük, hogy az a c rácspont a halmaz része. (Színes meg úgy 
             lesz a kép, hogy változatosan színezzük, például minél későbbi 
             z-nél lép ki a körből, annál sötétebbre). 
-        </para>
+        </para><para>***</para>
 <para>
 A feladat eredetileg C programot kér, amitől azonban a tényleges megoldás eltért. Érthető ez, mert a C-ben elérhető <code>libpng</code> igen alacsony szintű könyvtár,
 esetünkben elég kellemetlen lenne használni. Kíváncsiságból azért utánajártam, hogy hogy is néz ki a PNG formátum, szép feladatot lehetne belőle csinálni,
@@ -97,12 +86,122 @@ hogy hogyan is lehet egyszerű PNG képeket építeni bájtról bájtra.
 <para>
 Ám ez az eredeti feladattól egészen messzire vinne, így végül elvetettem a "találjuk fel újra a PNG-t" ötletet. Egy kevés keresgélés után viszont találtam
 nem is egy könnyen implementálható képfájl-formátumot; olyanokat, amik pont arra jók, hogy nyers színadatokat dobáljunk bele
-(hiszen tömörítésre, checksumokra, stb. most nincs szükségünk). Ezek közül a Netpbm-et találtam a legmegfelelőbbnek, azon belül is a <code>.pgm</code> (Portable GreyMap) típust. Csináltam tehát az ilyen fájlok írásához egy egyszerű implementációt.
+(hiszen tömörítésre, checksumokra, stb. most nincs szükségünk). Ezek közül a Netpbm-et találtam a legmegfelelőbbnek, azon belül is
+a <code>.pgm</code> (Portable GreyMap) típust. Csináltam tehát az ilyen fájlok írásához egy egyszerű implementációt:
 </para>
+<programlisting language="c">
+<![CDATA[
+typedef struct
+{
+    FILE *file;
+    coord size;
+    unsigned int pos;
+} pgm_write_info;
+
+pgm_write_info pgm_write_hdr(FILE *f, coord img_size)
+{
+    pgm_write_info info = {f, img_size, 0};
+
+    if(!fprintf(f, "P5 %u %u 255\n", img_size.x, img_size.y))
+        info.file = NULL;
+
+    return info;
+}
+
+int pgm_write_pixel(pgm_write_info *i, unsigned char pixel)
+{
+    if(i->pos >= i->size.x * i->size.y) return -1;
+    i->pos++;
+
+    return fwrite(&pixel, sizeof(unsigned char), 1, i->file);
+}
+]]>
+</programlisting>
 <para>
 Kisebb kitérő után tehát meglett a megoldás egyszerű képfájlok létrehozására. Innentől már csak számolni kellett egy keveset, és meg is jelent a Mandelbrot-halmaz a szemeim előtt.
+</para><para>
+A Mandelbrot iteráció függvénye:
 </para>
-<programlisting language="c"><xi:include href="../mandelbrot/mandelbrot.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+<programlisting language="c">
+<![CDATA[
+//Nullával térünk vissza, ha c a Mandelbrot-halmaz eleme, egyébként egy színezéshez használható 1-255 közötti értéket adunk
+unsigned char mandelbrot_iter(complexd c, unsigned int max_iter)
+{
+    complexd z = c;
+    unsigned char result = 0;
+
+    for(unsigned int i = 1; i <= max_iter; i++)
+    {
+        double re2 = z.re * z.re;
+        double im2 = z.im * z.im;
+        if(re2 + im2 > 4)
+        {
+            result = 1 + i * 254 / max_iter;
+            break;
+        }
+
+        //(a+bi)^2 + c + di = a*a-b*b+c + (2*a*b+d)*i 
+        z.im = 2 * z.re * z.im + c.im;
+        z.re = re2 - im2 + c.re;
+    }
+
+    return result;
+}
+]]>
+</programlisting>
+<para>
+A kép pixelein végigfutó ciklus:
+</para>
+<programlisting language="c">
+<![CDATA[
+for(coord pos = {0, 0}; pos.y < img_size.y; pos.y++)
+    for(pos.x = 0; pos.x < img_size.x; pos.x++)
+    {
+        unsigned char i = mandelbrot_iter(
+            img_coords_to_complex(pos, img_size, top_left, bottom_right),
+            max_iter);
+        
+        pgm_write_pixel(&pgm_inf, i);
+    }
+]]>
+</programlisting>
+<para>
+A kép koordinátái és a komplex sík pontjai közti átmenethez szükséges függvények:
+</para>
+<programlisting language="c">
+<![CDATA[
+typedef struct {double re, im;} complexd;
+typedef struct {unsigned int x, y;} coord;
+
+double lerpd(double a, double b, double t)
+{
+    return a * (1 - t) + b * t;
+}
+
+complexd img_coords_to_complex(coord point, coord img_size, complexd top_left, complexd bottom_right)
+{
+    complexd result;
+    result.re = lerpd(top_left.re, bottom_right.re, (double)point.x / img_size.x);
+    result.im = lerpd(top_left.im, bottom_right.im, (double)point.y / img_size.y);
+
+    return result;
+}
+]]>
+</programlisting>
+<para>
+És az eredmény:
+</para>
+<figure>
+            <title>A Mandelbrot halmaz a komplex síkon</title>
+            <mediaobject>
+                <imageobject>
+                    <imagedata fileref="img/mandel.png" scale="25"/>
+                </imageobject>
+                <textobject>
+                    <phrase>A Mandelbrot halmaz a komplex síkon</phrase>
+                </textobject>
+            </mediaobject>
+        </figure>
     </section>
 
     <section>
@@ -122,7 +221,34 @@ ismert algoritmust valósítja meg a repó <link xlink:href="../../../bhax/atten
                 <filename>bhax/attention_raising/Mandelbrot/3.1.2.cpp</filename>
             </link> nevű állománya.
         </para>
-        <programlisting language="c++"><xi:include href="../mandelbrot/mandelbrotcpp.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        <para>
+        Az <code>std::complex</code> használata megkönnyíti a komplex számolásokat:
+        </para>
+        <programlisting language="c++">
+<![CDATA[
+unsigned char mandelbrot_iter(std::complex<double> c, unsigned int max_iter)
+{
+    std::complex<double> z = c;
+    unsigned char result = 0;
+
+    for(unsigned int i = 1; i <= max_iter; i++)
+    {
+        if(std::abs(z) > 2)
+        {
+            result = 1 + i * 254 / max_iter;
+            break;
+        }
+
+        z = z * z + c;
+    }
+
+    return result;
+}
+]]>
+        </programlisting>
+        <para>
+        Emellett, mivel C++-ban vagyunk, a képfájl írása is könnyebbé válik (<code>std::ofstream</code>).
+        </para>
     </section>
 
     <section>
@@ -200,45 +326,25 @@ ismert algoritmust valósítja meg a repó <link xlink:href="../../../bhax/atten
             <link xlink:href="https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf">https://www.emis.de/journals/TJNSA/includes/files/articles/Vol9_Iss5_2305--2315_Biomorphs_via_modified_iterations.pdf</link>.
             Az is jó gyakorlat, ha magából ebből a cikkből from scratch kódoljuk be a sajátunkat, de mi a királyi úton járva a 
             korábbi <link xlink:href="#bhax-textbook-feladatok-mandelbrot.Mandelbrot">Mandelbrot halmazt</link> kiszámoló 
-            forrásunkat módosítjuk. Itt van tehát a módosított iterációs függvény:
+            forrásunkat módosítjuk. Itt van tehát a módosított iterációs függvény: (Ez a változat a z = z<superscript>3</superscript> + 0.5 biomorfot számolja)
         </para>
         <programlisting language="c">
 <![CDATA[
 unsigned char biomorph_iter(complexd z, complexd c, unsigned int max_iter)
 {
-    unsigned char result = 0;
-    
     for(unsigned int i = 1; i <= max_iter; i++)
     {
-        
-        double re2 = z.re * z.re;
-        double im2 = z.im * z.im;
-        /*if(re2 + im2 > 4)
-        {
-            result = 1 + i * 254 / max_iter;
+        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10)
             break;
-        }*/
-        if(z.re * z.re + z.im * z.im > 100) break;
-        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
-
-        //(a+bi)^2 + c + di = a*a-b*b+c + (2*a*b+d)*i 
-        z.im = 2 * z.re * z.im + c.im;
-        z.re = re2 - im2 + c.re;
-        
-
-        /*
-        if(z.re * z.re + z.im * z.im > 100) break;
-        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
 
         complexd z_next = {z.re * (z.re*z.re - 3*z.im*z.im) + c.re, z.im * (3*z.re*z.re - z.im*z.im) + c.im};
         z = z_next;
-        */
     }
 
-    if(!((z.re > -10 && z.re < 10) || (z.im > -10 && z.im < 10)))
-        result = 255;
+    if((z.re > -10 && z.re < 10) || (z.im > -10 && z.im < 10))
+        return 0;
 
-    return result;
+    return 255;
 }
 ]]>
         </programlisting>

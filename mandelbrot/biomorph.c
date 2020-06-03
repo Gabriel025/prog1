@@ -31,7 +31,7 @@ int main()
     complexd bottom_right = {center.re + hwidth, center.im - hheight};
 
     complexd julia_c = {0.5, 0.0};
-    unsigned int max_iter = 100;
+    unsigned int max_iter = 250;
 
     char filename[32];
     time_t now = time(NULL);
@@ -71,39 +71,19 @@ complexd img_coords_to_complex(coord point, coord img_size, complexd top_left, c
 //returns 0 if z is in the (filled) set, otherwise the return value can be used for color
 unsigned char julia_iter(complexd z, complexd c, unsigned int max_iter)
 {
-    unsigned char result = 0;
-    
     for(unsigned int i = 1; i <= max_iter; i++)
     {
-        
-        double re2 = z.re * z.re;
-        double im2 = z.im * z.im;
-        /*if(re2 + im2 > 4)
-        {
-            result = 1 + i * 254 / max_iter;
+        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10)
             break;
-        }*/
-        if(z.re * z.re + z.im * z.im > 100) break;
-        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
-
-        //(a+bi)^2 + c + di = a*a-b*b+c + (2*a*b+d)*i 
-        z.im = 2 * z.re * z.im + c.im;
-        z.re = re2 - im2 + c.re;
-        
-
-        /*
-        if(z.re * z.re + z.im * z.im > 100) break;
-        if(z.re < -10 || z.re > 10 || z.im < -10 || z.im > 10) break;
 
         complexd z_next = {z.re * (z.re*z.re - 3*z.im*z.im) + c.re, z.im * (3*z.re*z.re - z.im*z.im) + c.im};
         z = z_next;
-        */
     }
 
-    if(!((z.re > -10 && z.re < 10) || (z.im > -10 && z.im < 10)))
-        result = 255;
+    if((z.re > -10 && z.re < 10) || (z.im > -10 && z.im < 10))
+        return 0;
 
-    return result;
+    return 255;
 }
 
 

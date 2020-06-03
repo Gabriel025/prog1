@@ -60,7 +60,59 @@ Mi van akkor, ha komplex számokat szeretnénk használni? A C nyelv határán v
             Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
             Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
         </para>
-        <programlisting language="c"><xi:include href="../caesar/xor_encrypt.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+        <para>
+            Nincs nehéz dolgunk, az XOR titkosítás kb. a legkönnyebb titkosítási módszer.
+            Egyedül arra kell figyelnünk, hogy itt mindenképpen puffereket kell használnunk, nem hagyatkozhatunk a \0
+            záró karakterre, mivel a titkosított kódban bárhol előfordulhatnak null karakterek.
+            (Ezt el lehet kerülni pl. base64 kódolással)
+            Itt egy egyszerű implementáció:
+        </para>
+        <programlisting language="c"><![CDATA[
+void xor_encrypt(char *key, char *buffer, int buffer_size)
+{
+    int keysize = strlen(key);
+
+    for(int i = 0; i < buffer_size; i++)
+        buffer[i] ^= key[i % keysize];
+}
+]]>
+    </programlisting>
+    <para>
+    A program többi része lényegében csak beolvasás és kiírás:
+    </para>
+<programlisting language="c"><![CDATA[
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+void xor_encrypt(char *key, char *buffer, int buffer_size);
+
+#define MAX_KEY_LEN 20
+#define BUFFER_SIZE 256
+
+int main(int argc, char **argv)
+{
+    char key[MAX_KEY_LEN], buffer[BUFFER_SIZE];
+    
+    if(argc > 1) strncpy(key, argv[1], MAX_KEY_LEN);
+    else
+    {
+        printf("Encryption key: ");
+        fgets(key, MAX_KEY_LEN, stdin);
+    }
+
+    int n_bytes;
+    while(n_bytes=read(0, buffer, BUFFER_SIZE))
+    {
+        xor_encrypt(key, buffer, n_bytes);
+        write(1, buffer, n_bytes);
+    }
+    
+
+    return 0;
+}
+]]></programlisting>
     </section>
 
     <section>
@@ -86,14 +138,73 @@ Mi van akkor, ha komplex számokat szeretnénk használni? A C nyelv határán v
             Megoldás forrása: egy részletes feldolgozása az 
             <link xlink:href="https://progpater.blog.hu/2011/02/15/felvetelt_hirdet_a_cia">posztban</link>, lásd az t.c forrást.               
         </para>
-        <para>
-            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
-            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
-        </para>
 <para>
-
+Hmm... 8 egymásba ágyazott for ciklus? Sőt, n egymásba ágyazott for ciklus,
+a keresett kulcs hossza alapján... Kell lennie jobb megoldásnak. A megoldáshoz jó kiindulópont lehet, ha a kulcsokra afféle
+számokként gondolunk, a megengedett karakterek számának megfelelő számrendszerben.  z alábbi két fügvénnyel végig tudunk
+lépegetni az összes <code>min_len</code> és <code>max_len</code> közti hosszúságú <code>allowed_ch</code> karakterekből álló kulcson:
 </para>
-<programlisting language="c"><xi:include href="../caesar/xor_crack.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>           
+<programlisting language="c">
+<![CDATA[
+void first_key(char *allowed_ch, int min_len, char *result)
+{
+    for(int i = 0; i < min_len; i++) result[i] = allowed_ch[0];
+    result[min_len] = '\0';
+}
+
+int next_key(char *allowed_ch, int max_len, char *key)
+{
+    int carry = 1, allowed_ch_len = strlen(allowed_ch), key_len = strlen(key);
+
+    while(carry)
+    {
+        if(*key == '\0')
+        { 
+            if(key_len == max_len) return 0;
+            else
+            {
+                key[0] = allowed_ch[0];
+                key[1] = '\0';
+            }
+        }
+
+        int pos;
+        for(pos = 0; pos < allowed_ch_len; pos++)
+            if(allowed_ch[pos] == *key) break;
+        
+        if(pos == allowed_ch_len) return -1;
+        pos = (pos + 1) % allowed_ch_len;
+        
+        *key = allowed_ch[pos];
+        if(pos != 0) carry = 0;
+        key++; 
+    }
+
+    return 1;
+}
+]]>
+</programlisting>
+<para>
+Mivel nem használjuk egyszerre az összes lehetőséget, elég egy kinevezett első érték, és az adott kulcsnak a rákövetkezője.
+(forward iteration)
+Ennyivel már könnyedén (és hatékonyan) megírhatjuk a brute-force programunk fő ciklusát.
+</para>
+<programlisting language="c">
+<![CDATA[
+first_key(allowed_chars, min_key_size, key);
+do
+{
+    xor_encrypt(key, buffer, n_bytes);
+    
+    if(heuristic(buffer, n_bytes))
+    {
+        printf("%s\n\n", buffer);
+    }
+
+    xor_encrypt(key, buffer, n_bytes);
+} while(next_key(allowed_chars, max_key_size, key) > 0);
+]]>
+</programlisting>
     </section>
 
     <section>
@@ -119,7 +230,7 @@ Mi van akkor, ha komplex számokat szeretnénk használni? A C nyelv határán v
             Fontos, hogy ebben a feladatban még nem 
             a <link xlink:href="https://prezi.com/0u8ncvvoabcr/no-programming-programming/">neurális paradigma</link> megismerése 
             a cél, hanem a többrétegű perceptron memóriakezelése (lásd majd a változó argumentumszámú
-            konstruktorban a <type>double ***</type> szerkezetet). 
+            konstruktorban a <type>double ***</type> szerkezetet).
         </para>
         <para>
             Megoldás videó: <link xlink:href="https://youtu.be/XpBnR31BRJY">https://youtu.be/XpBnR31BRJY</link>
@@ -128,10 +239,96 @@ Mi van akkor, ha komplex számokat szeretnénk használni? A C nyelv határán v
             Megoldás forrása: <link xlink:href="https://github.com/nbatfai/nahshon/blob/master/ql.hpp#L64">https://github.com/nbatfai/nahshon/blob/master/ql.hpp#L64</link>
         </para>
         <para>
-            Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
-            Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
+            Lépjünk vissza egy kicsit... C++-ban vagyunk, így megtehetjük, és miért is ne tennénk,
+            hogy amennyiben nem muszáj, nem kínlódunk magunk a memóriakezeléssel.
+            Ebben az esetben céljainknak tökéletesen megfelel az <code>std::vector&lt;&gt;</code>,
+            hiszen közvetlen elérést biztosít, futásidőben meghatározott méretű,
+            és megfelelő paraméterekkel nem használ több tárhelyet a szükségesnél.
+            </para>
+            <programlisting language="c++">
+<![CDATA[
+typedef std::pair<double, std::vector<double>> neuron;
+typedef std::vector<neuron> layer;
+
+std::vector<layer> neurons;
+
+//Kibontva:
+std::vector<std::vector<std::pair<double, std::vector<double>>>> neurons;
+]]>
+            </programlisting>
+            <para>
+            Habár lehet, hogy túlzásnak tűnik a <code>neurons</code> deklaráció kibontása, de nincs számottevő
+            teljesítménybeli különbség több dimenzió esetén sem...
+            Ha teljesen pontosak akarunk lenni, le lehet tesztelni és össze lehet hasonlítani
+            pár különböző implementáció sebességét, de a vektor esetében ezt már rengetegen megtették.
+            Főleg, mivel itt nem változtatjuk a vektoraink méretét, nem kell számítanunk a teljesítmény romlására.
         </para>
-        <!--<programlisting language="c"><xi:include href="../caesar/backprop.c" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting> -->
+        <para>
+        Az adatmodellünk megvan, következő lépésként építsünk köré egy osztályt.
+        Ez lehet egy nagyon könnyű feladat is, de lehet igen nehéz is, alaposságtól függően.
+        Ha egy jól megtervezett osztályt akarunk készíteni, amit bárki kezébe adhatunk, sok dologra oda kell figyelnünk:
+        <itemizedlist>
+        <listitem><para>elérés-módosítok (access modifiers): public, protected, private</para></listitem>
+        <listitem><para>másoló, mozgató konstruktorok</para></listitem>
+        <listitem><para>másoló, mozgató értékadó operátorok</para></listitem>
+        <listitem><para>elérő és módosító függvények</para></listitem>
+        <listitem><para>referenciák használata (a felesleges másolások elkerülése érdekében)</para></listitem>
+        <listitem><para>amit nem változtatunk, az legyen konstans
+        (a függvények végén akkor van const, ha az nem változtatja meg a példány állapotát) (const-correctness)</para></listitem>
+        </itemizedlist>
+        </para>
+        <para>
+        Alább található az ezek alapján elkészített megoldásom.
+        (Csak az osztály szerkezete, maga az implementáció még egy következő lépés.)
+        </para>
+        <programlisting language="c++">
+<![CDATA[
+class neural_net
+{
+public:
+    neural_net(const std::vector<unsigned int>& topology = std::vector<unsigned int>());
+    neural_net(const neural_net& other);
+    neural_net(neural_net&& other);
+    ~neural_net();
+
+    neural_net& operator=(const neural_net& other);
+    neural_net& operator=(neural_net&& other);
+
+    std::vector<double> input() const;
+    std::vector<double>::const_iterator input_begin() const; //Iterátorok arra az esetre, ha nincs szükségünk másolásra
+    std::vector<double>::const_iterator input_end() const;
+    void feed_input(const std::vector<double>& input);
+
+    std::vector<double> output() const;
+    std::vector<double>::const_iterator output_begin() const;
+    std::vector<double>::const_iterator output_end() const;
+    void back_propagate(const std::vector<double>& output);
+
+private:
+    /* Példa topológára: 3 4 3 2
+       Értelmezés: 3+1 bemeneti neuron, egy rejtett réteg 4+1 neuronnal,
+                   mégegy rejtett réteg 3+1 neuronnal, 2 kimeneti neuron
+                   (a +1 neuronok az eltolósúly-értékekhez kellenek (bias))
+    */
+    std::vector<unsigned int> topology;
+
+protected:
+    /* std::pair-t használunk:
+       számított érték/bemeneti érték + a megfelelő súlyok vektora (a következő réteg elemszámától függ)
+       Lehetne osztály is, bizonyos esetben előnyös lehet, de maradjunk egy egyszerűbb leképezésnél. */
+    typedef std::pair<double, std::vector<double>> neuron;
+    typedef std::vector<neuron> layer;
+
+    std::vector<layer> neurons;
+
+    double neuron_value(int layer, int neuron) const;
+    void set_neuron_value(int layer, int neuron, double value);
+
+    double weight_value(int layer_from, int neuron_from, int neuron_to) const;
+    void set_weight_value(int layer_from, int neuron_from, int neuron_to, double weight);
+};
+]]>
+        </programlisting>
     </section>
 
     <section>

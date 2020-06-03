@@ -14,18 +14,28 @@ int main(int argc, char **argv)
     int min_key_size = 2;
     int max_key_size = 6;
 
-    int block_size = 128;
-    heuristic_func hfn = check_common_words_hu;
+    int sample_size = 128, sample_offset = 0;
+    heuristic_func heuristic = check_common_words_hu;
     
     
-    char key[max_key_size + 1];
+    char key[max_key_size + 1], buffer[sample_size + 1];
+    
+    for(int i = 0; i < sample_offset; i++) read(0, buffer, 1);
+    int n_bytes = read(0, buffer, sample_size);
+    buffer[n_bytes] = '\0';
 
     first_key(allowed_chars, min_key_size, key);
-    while(next_key(allowed_chars, max_key_size, key) > 0)
+    do
     {
-        printf("%s\n", key);
+        xor_encrypt(key, buffer, n_bytes);
         
-    }
+        if(heuristic(buffer, n_bytes))
+        {
+            printf("%s\n\n", buffer);
+        }
+
+        xor_encrypt(key, buffer, n_bytes);
+    } while(next_key(allowed_chars, max_key_size, key) > 0);
 
     return 0;
 }
@@ -33,7 +43,7 @@ int main(int argc, char **argv)
 void first_key(char *allowed_ch, int min_len, char *result)
 {
     for(int i = 0; i < min_len; i++) result[i] = allowed_ch[0];
-    result[min_len + 1] = '\0';
+    result[min_len] = '\0';
 }
 
 int next_key(char *allowed_ch, int max_len, char *key)
@@ -70,5 +80,5 @@ int next_key(char *allowed_ch, int max_len, char *key)
 
 int check_common_words_hu(char *buffer, int n)
 {
-    return strcasestr(buffer, "az") && strcasestr(buffer, "egy") && strcasestr(buffer, "hogy");
+    return n == strlen(buffer) && strcasestr(buffer, "az") && strcasestr(buffer, "egy") && strcasestr(buffer, "hogy");
 }

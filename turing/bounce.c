@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <ncurses.h>
-#include <math.h>
 
 int main(int argc, char **argv)
 {

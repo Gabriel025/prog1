@@ -15,7 +15,7 @@ void spin(int proc)
 
 int main(int argc, char **argv)
 {
-    int nprocs = get_nprocs_conf();
+    int nprocs = get_nprocs_conf(); //Lekérdezzük a processzorok számát (ehhez kell a sys/sysinfo.h)
     
     pthread_t threads[nprocs];
 

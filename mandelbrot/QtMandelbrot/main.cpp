@@ -1,21 +1,28 @@
 #include <QtWidgets>
+#include <QtMath>
 #include <complex>
 
 typedef std::complex<double> complexd;
 
-inline double lerpd(double a, double b, double t)
+template<typename T>
+inline T lerp(T a, T b, T t)
 {
     return a * (1 - t) + b * t;
 }
 
 
-#define RECALC_DELAY 100
+#define RECALC_DELAY 200
+#define SCROLL_SENSITIVITY 0.1
 
 class MandelbrotWindow : public QWidget
 {
 private:
     QImage frame;
-    complexd center, half_width;
+    QRect view_src_rect;
+    complexd c_center, top_left, bottom_right;
+    double half_width = 1.0;
+
+    QPoint prev_mouse_pos;
 
     QTimer recalc_timer;
     QThread recalc_thread;
@@ -24,54 +31,87 @@ private:
 
     void resizeEvent(QResizeEvent *event) override
     {
-        resizeFrame(event->size());
-    }
-
-    void resizeFrame(const QSize& size)
-    {
-        QImage new_frame = QImage(size.width(), size.height(), QImage::Format_Grayscale8);
+        QImage new_frame = QImage(width(), height(), QImage::Format_Grayscale8);
         new_frame.fill(0);
-        QPainter p(&new_frame);
-        p.drawImage(QPoint(0, 0), frame);
         frame = new_frame;
+        //frame = frame.scaled(size());
+        //view_src_rect = frame.rect();
+
+        update_corner_coords();
+        recalc_timer.start();
     }
 
     void keyPressEvent(QKeyEvent *event) override
     {
-        QWidget::keyPressEvent(event);
+        event->ignore();
     }
 
     void mousePressEvent(QMouseEvent *event) override
     {
-        //paintCell(event);
+        prev_mouse_pos = event->pos();
+    }
+
+    void mouseMoveEvent(QMouseEvent *event) override
+    {
+        if(!(event->buttons() & Qt::LeftButton)) return;
+
+        prev_mouse_pos -= event->pos();
+        complexd pan = frame_coords_to_complex(prev_mouse_pos) - top_left;
+        c_center += pan;
+        view_src_rect.moveTo(view_src_rect.topLeft() + prev_mouse_pos);
+        prev_mouse_pos = event->pos();
+
+        update();
+    }
+
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        update_corner_coords();
+        recalculate();
     }
 
     void wheelEvent(QWheelEvent *event) override
     {
-        event->delta();
+        complexd c_mouse = frame_coords_to_complex(event->pos());
+        double scale_factor = qPow(2, (qreal)event->angleDelta().y() / 1200); qDebug()<<"wheel "<<event->angleDelta().y()<<" "<<scale_factor;
+
+        c_center = (c_center - c_mouse) * scale_factor + c_mouse;
+        half_width = half_width * scale_factor;
+
+        view_src_rect.setTopLeft((view_src_rect.topLeft() - event->pos()) * scale_factor + event->pos());
+        view_src_rect.setBottomRight((view_src_rect.bottomRight() - event->pos()) * scale_factor + event->pos());
+
+        update_corner_coords();
+        recalc_timer.start();
+        update();
     }
 
     void paintEvent(QPaintEvent *event) override
     {
         QPainter p(this);
-        p.drawImage(rect(), frame);
+
+        p.drawImage(rect(), frame, view_src_rect);
     }
 
     void recalculate()
     {
-        for(int y = 0; y < frame.height(); y++)
-            for(int x = 0; x < frame.width(); x++)
+        qDebug()<<"recalculate\n";
+        //frame_lock.lock();
+
+        for(QPoint pt; pt.y() < frame.height(); pt.setY(pt.y() + 1))
+        {
+            for(pt.setX(0); pt.x() < frame.width(); pt.setX(pt.x() + 1))
             {
-                int n = nLiveNeighbors(x, y);
-
-                if(frame.pixelIndex(x, y) == 1 && (n < 2 || n > 3))
-                    nextframe.setPixel(x, y, 0);
-                if(frame.pixelIndex(x, y) == 0 && n == 3)
-                    nextframe.setPixel(x, y, 1);
+                char val = mandelbrot_iter(frame_coords_to_complex(pt), 150);
+                frame.setPixel(pt, qRgb(val, val, val));
             }
+            view_src_rect = frame.rect();
+        }
 
-        frame = nextframe;
-        repaint();
+        view_src_rect = frame.rect();
+        //frame_lock.unlock();
+
+        update();
     }
 
     unsigned char mandelbrot_iter(complexd c, unsigned int max_iter)
@@ -97,25 +137,49 @@ private:
         return result;
     }
 
-    complexd screen_coords_to_complex(QPoint point, complexd top_left, complexd bottom_right)
+    void update_corner_coords()
+    {
+        complexd diag(half_width, half_width * frame.height() / frame.width());
+        top_left = c_center - diag;
+        bottom_right = c_center + diag;
+
+        qDebug()<<"c_center:     "<<c_center.real()<<"; "<<c_center.imag();
+        qDebug()<<"top_left:     "<<top_left.real()<<"; "<<top_left.imag();
+        qDebug()<<"bottom_right: "<<bottom_right.real()<<"; "<<bottom_right.imag();
+    }
+
+    complexd frame_coords_to_complex(QPoint point)
     {
         complexd result;
-        result.real(lerpd(top_left.real(), bottom_right.real(), (double)point.first / img_size.first));
-        result.imag(lerpd(top_left.imag(), bottom_right.imag(), (double)point.second / img_size.second));
+        result.real(lerp<double>(top_left.real(), bottom_right.real(), (double)point.x() / frame.width()));
+        result.imag(lerp<double>(top_left.imag(), bottom_right.imag(), (double)point.y() / frame.height()));
+
+        return result;
+    }
+
+    QPoint complex_coords_to_frame(complexd point)
+    {
+        point -= top_left;
+        complexd b = bottom_right - top_left;
+        QPoint result;
+        result.setX((int)lerp<double>(0, frame.width(), point.real() / b.real()));
+        result.setY((int)lerp<double>(0, frame.height(), point.imag() / b.imag()));
 
         return result;
     }
 
 public:
-    explicit MandelbrotWindow(QWidget *parent = nullptr) : QWidget(parent), recalc_timer(this), recalc_thread(this)
+    explicit MandelbrotWindow(QWidget *parent = nullptr)
+        : QWidget(parent), recalc_timer(this), recalc_thread(this)
     {
         setWindowTitle("Mandelbrot set");
         resize(800, 600);
 
         recalc_timer.setSingleShot(true);
         recalc_timer.setInterval(RECALC_DELAY);
-        connect(&recalc_timer, &QTimer::timeout, &recalc_thread, &QThread::start);
-        //connect(&recalc_thread, &QThread::finished, this, ...);
+        //connect(&recalc_timer, &QTimer::timeout, &recalc_thread, [this](){qDebug()<<"recalc_thread.start();"; recalc_thread.start(); });
+        connect(&recalc_timer, &QTimer::timeout, this, [this](){ recalculate(); });
+        connect(&recalc_thread, &QThread::finished, this, [this](){ update(); });
     }
 };
 
