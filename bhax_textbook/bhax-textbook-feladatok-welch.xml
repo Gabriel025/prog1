@@ -182,6 +182,106 @@ public class polar {
         <para>
             Megoldás forrása: <link xlink:href="https://progpater.blog.hu/2011/03/05/labormeres_otthon_avagy_hogyan_dolgozok_fel_egy_pedat">https://progpater.blog.hu/2011/03/05/labormeres_otthon_avagy_hogyan_dolgozok_fel_egy_pedat</link>.
         </para>
+        <para>
+        Ehhez először hozzunk létre egy bináris fa csomópont struktúrát:
+        </para>
+        <programlisting language="c"><![CDATA[
+typedef struct tag_bintree_node
+{
+    int data;
+    struct tag_bintree_node* left;
+    struct tag_bintree_node* right;
+} bintree_node;
+        ]]></programlisting>
+        <para>Ezt felhasználva csináljunk egy fejléc jellegű LZW fa struktúrát:</para>
+        <programlisting language="c"><![CDATA[
+typedef struct
+{
+    bintree_node *root;
+    int n_nodes;
+    bintree_node *ins;
+} lzw_hdr;]]>
+        </programlisting>
+        <para>Írjunk pár függvényt hozzá:</para>
+        <programlisting language="c"><![CDATA[
+lzw_hdr lzw_create(void)
+{
+    lzw_hdr tree;
+    tree.root = calloc(1, sizeof(bintree_node));
+    tree.n_nodes = 1;
+    tree.ins = tree.root;
+    return tree;
+}
+
+void lzw_insert(lzw_hdr *tree, char ch)
+{
+    if(tree->root == NULL || tree->ins == NULL) return;
+
+    bintree_node **child = NULL;
+
+    if(ch == '0') child = &tree->ins->left;
+    else if(ch =='1') child = &tree->ins->right;
+    else return;
+    
+    if(*child == NULL)
+    {
+        *child = calloc(1, sizeof(bintree_node));
+        //(*child)->data = tree->n_nodes++;
+        (*child)->data = ch == '0' ? 0 : 1;
+
+        tree->ins = tree->root;
+    }
+    else tree->ins = *child;
+}
+
+void lzw_free(lzw_hdr *tree)
+{
+    bintree_free(tree->root);
+    tree->root = tree->ins = NULL;
+    tree->n_nodes = 0;
+}
+
+void bintree_free(bintree_node *root)
+{
+    if(root->left != NULL)
+        bintree_free(root->left);
+    if(root->right != NULL)
+        bintree_free(root->right);
+    free(root);
+}]]>
+        </programlisting>
+        <para>És készen is van minden, amire szükségünk van LZW-fák létrehozásához. Egy egyszerű <code>main()</code>,
+        hogy ki is tudjuk próbálni: (A <code>bintree_print()</code> implementációjához lásd a teljes forrást)</para>
+        <programlisting language="c"><![CDATA[
+int main()
+{
+    srand(1);
+    setlocale(LC_ALL, "");
+
+    lzw_hdr tree = lzw_create();
+
+    char input;
+    while(!feof(stdin))
+    {
+        input = (char)getchar();
+        if(input != '0' && input != '1') continue;
+
+        lzw_insert(&tree, input);
+    }
+
+    bintree_print(tree.root, 0);
+
+    lzw_free(&tree);
+
+    return 0;
+}]]>
+        </programlisting>
+        <para>Futtassuk le a programot, adjunk neki bemenetet:</para>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="img/6-2-term.png"/>
+            </imageobject>
+        </mediaobject>
     </section>
 
     <section>
@@ -192,7 +292,30 @@ public class polar {
         <para>
             Megoldás forrása:
         </para>
-        <programlisting language="c++">
+        <programlisting language="c">
+<![CDATA[void bintree_preorder_print(bintree_node *root)
+{
+    if(root == NULL) return;
+    printf("%d", root->data);
+    bintree_preorder_print(root->left);
+    bintree_preorder_print(root->right);
+}
+
+void bintree_inorder_print(bintree_node *root)
+{
+    if(root == NULL) return;
+    bintree_preorder_print(root->left);
+    printf("%d", root->data);
+    bintree_preorder_print(root->right);
+}
+
+void bintree_postorder_print(bintree_node *root)
+{
+    if(root == NULL) return;
+    bintree_postorder_print(root->left);
+    bintree_postorder_print(root->right);
+    printf("%d", root->data);
+}]]>
         </programlisting>
     </section>
 
@@ -231,9 +354,9 @@ public class polar {
         <para>fog szerepelni a <code>bin_tree&lt;&gt;</code> osztályban, illetve a konstruktorokban és a destruktorban
         <code>new</code> és <code>delete</code> utasításokra van szükségünk:</para>
         <programlisting language="c++">
-        bin_tree() : root(new node()) {}
-        bin_tree(const T&amp; r) : root(new node(r)) {}
-        ~bin_tree() { delete root; }
+bin_tree() : root(new node()) {}
+bin_tree(const T&amp; r) : root(new node(r)) {}
+~bin_tree() { delete root; }
         </programlisting>
         <para>Használhatunk ehelyett <code>std::unique_ptr&lt;node&gt;</code>-t is a birtoklás erősebb kifejezésére,
         ekkor külön <code>delete</code>-re sincs szükségünk.</para>

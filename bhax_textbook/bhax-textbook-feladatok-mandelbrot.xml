@@ -195,7 +195,7 @@ complexd img_coords_to_complex(coord point, coord img_size, complexd top_left, c
             <title>A Mandelbrot halmaz a komplex síkon</title>
             <mediaobject>
                 <imageobject>
-                    <imagedata fileref="img/mandel.png" scale="25"/>
+                    <imagedata fileref="img/mandel.png" scale="50"/>
                 </imageobject>
                 <textobject>
                     <phrase>A Mandelbrot halmaz a komplex síkon</phrase>
@@ -348,14 +348,17 @@ unsigned char biomorph_iter(complexd z, complexd c, unsigned int max_iter)
 }
 ]]>
         </programlisting>
+        <figure>
+        <title>A Radiolarian névre hallgató biomorf</title>
         <mediaobject>
-                <imageobject>
-                    <imagedata fileref="img/radiolarian.png" scale="25"/>
-                </imageobject>
-                <textobject>
-                    <phrase>A Radiolarian névre hallgató biomorf képe</phrase>
-                </textobject>
-            </mediaobject>
+            <imageobject>
+                <imagedata fileref="img/radiolarian.png"/>
+            </imageobject>
+            <textobject>
+                    <phrase>A Radiolarian névre hallgató biomorf</phrase>
+            </textobject>
+        </mediaobject>
+        </figure>
     </section>
 
     <section>

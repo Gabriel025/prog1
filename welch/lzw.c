@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <locale.h>
 #include <wchar.h>
@@ -47,6 +48,8 @@ int main()
     while(!feof(stdin))
     {
         input = (char)getchar();
+        if(isspace(input)) continue;
+
         if(input == 'r')
         {
             for(int i = 0; i < 100; i++)
@@ -116,6 +119,14 @@ void bintree_preorder_print(bintree_node *root)
     if(root == NULL) return;
     printf("%d", root->data);
     bintree_preorder_print(root->left);
+    bintree_preorder_print(root->right);
+}
+
+void bintree_inorder_print(bintree_node *root)
+{
+    if(root == NULL) return;
+    bintree_preorder_print(root->left);
+    printf("%d", root->data);
     bintree_preorder_print(root->right);
 }
 
