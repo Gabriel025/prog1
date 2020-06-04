@@ -22,7 +22,7 @@ int main(void)
 {
     /*
         M[i][j] értéke aszerint alakul, hogy
-        az j sorszámú oldalon van-e a
+        a j sorszámú oldalon van-e az
         i sorszámú oldalra mutató link.
         M oszlopainak az összege 1
     */
@@ -35,14 +35,14 @@ int main(void)
 
     //"simítunk" a mátrixon (damping); ez egy egész gyakori módszer
     //a "lógó" oldalak által okozott végeten ciklusok elkerülésére
-    damp_matrix(4, M, 0.85);
+    //damp_matrix(4, M, 0.85);
 
     double PR[4] = {1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0};
     double PR_prev[4] = {0.0, 0.0, 0.0, 0.0};
 
     while(1)
     {
-        if (delta(4, PR, PR_prev) < 0.00001)
+        if (delta(4, PR, PR_prev) < 0.000001)
             break;
 
         //PageRank iteration:
@@ -101,5 +101,6 @@ void swap(void *a, void *b, size_t len)
 void print_array(int n, double array[n])
 {
     for (int i = 0; i < n; i++)
-        printf("%f\n", array[i]);
+        printf("%f ", array[i]);
+    printf("\n");
 }

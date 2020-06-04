@@ -417,43 +417,13 @@ int main(int argc, char **argv)
         A megoldásomat megpróbáltam úgy felépíteni, hogy szépen látszódjon az elméleti anyagban leírt <code>x = Ax</code> iterációja:
         </para>
         <programlisting language="c"><![CDATA[
-while(1)
-{
-    if (delta(4, PR, PR_prev) < 0.00001)
-        break;
-
-    //PageRank iteration:
-    Amulx(4, M, PR, PR_prev);
-    swap(PR, PR_prev, sizeof(PR));
-}
-]]>
-    </programlisting>
-    <para>
-    Ahol az <code>Amulx(n, A, x, result)</code> kiszámítja az A mátrix és az x vektor szorzatát
-    és a <code>delta(n, vec, prev_vec)</code> visszaadja két vektor különbségének a hosszát. (Implementáció lentebb)
-    </para>
-	<programlisting language="c"><![CDATA[
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-#include <unistd.h>
-
-void damp_matrix(int n, double mat[n][n], double d);
-void Amulx(int n, double A[n][n], double x[n], double result[n]);
-
-void swap(void *a, void *b, size_t len);
-double delta(int n, double vec[n], double prev_vec[n]);
-
-void print_array(int n, double array[n]);
-
 int main(void)
 {
     /*
         M[i][j] értéke aszerint alakul, hogy
-        az j sorszámú oldalon van-e a
+        a j sorszámú oldalon van-e az
         i sorszámú oldalra mutató link.
-        M oszlopainak az összege 1
+        M oszlopainak az összege 1 (oszlop-sztochasztikus mtrix)
     */
     double M[4][4] = {
         {0.0, 0.0, 0.33, 0.0},
@@ -463,7 +433,7 @@ int main(void)
     };
 
     //"simítunk" a mátrixon (damping); ez egy egész gyakori módszer
-    //a "lógó" oldalak által okozott végeten ciklusok elkerülésére
+    //a "lógó" oldalak által okozott végeten ciklusok elkerülésére (részletek az első forrásban)
     damp_matrix(4, M, 0.85);
 
     double PR[4] = {1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0};
@@ -471,7 +441,7 @@ int main(void)
 
     while(1)
     {
-        if (delta(4, PR, PR_prev) < 0.00001)
+        if (delta(4, PR, PR_prev) < 0.000001)
             break;
 
         //PageRank iteration:
@@ -479,12 +449,16 @@ int main(void)
         swap(PR, PR_prev, sizeof(PR));
     }
 
-    print_array(4, PR);
     return 0;
 }
-
-
-
+]]>
+    </programlisting>
+    <para>
+    Ahol az <code>Amulx(n, A, x, result)</code> kiszámítja az A mátrix és az x vektor szorzatát
+    és a <code>delta(n, vec, prev_vec)</code> visszaadja két vektor különbségének a hosszát.
+    A felhasznált függvények az implementációi:
+    </para>
+	<programlisting language="c"><![CDATA[
 void damp_matrix(int size, double mat[size][size], double d)
 {
     for(int i = 0; i < size; i++)
@@ -530,7 +504,8 @@ void swap(void *a, void *b, size_t len)
 void print_array(int n, double array[n])
 {
     for (int i = 0; i < n; i++)
-        printf("%f\n", array[i]);
+        printf("%f ", array[i]);
+    printf("\n");
 }
 ]]></programlisting>
     </section>

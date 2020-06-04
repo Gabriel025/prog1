@@ -18,6 +18,160 @@
             Tanulságok, tapasztalatok, magyarázat... térj ki arra is, hogy a JDK forrásaiban a Sun programozói
             pont úgy csinálták meg ahogyan te is, azaz az OO nemhogy nem nehéz, hanem éppen természetes neked!
         </para>
+        <para>
+        Először nézzük meg, hogy nézne ki osztályok nélkül a feladat: (C-ben)
+        </para>
+        <programlisting language="c">
+<![CDATA[
+double rand_polar()
+{
+    static double stored;
+    static bool hasStored = false;
+
+    if(hasStored)
+    {
+        hasStored = false;
+        return stored;
+    }
+
+    double v1, v2, w;
+
+    do
+    {
+        v1 = (double)rand() / RAND_MAX * 2.0 - 1;
+        v2 = (double)rand() / RAND_MAX * 2.0 - 1;
+        w = v1 * v1 + v2 * v2;
+    } while(w > 1);
+
+    double r = sqrt(-2.0 * log(w) / w);
+
+    hasStored = true;
+    stored = r * v2;
+
+    return r * v1;
+}
+]]>
+        </programlisting>
+        <para>
+        Ez a megoldás azt a kevés állapotot, amit meg kell tartanunk, statikus változókban tárolja. Ehhez képest
+        egy objektum-orientált megközelítésben ezt az állapotot egy osztályba foglaljuk: (C++)
+        </para>
+        <programlisting language="c++">
+<![CDATA[class polargen
+{
+public:
+    polargen() = default;
+
+    double next() { /*...*/ }
+
+private:
+    double stored;
+    bool hasStored;
+} ]]>
+        </programlisting>
+    <para>
+    Ennek a nem statikus megközelítésnek akkor van igazán értelme, ha pszeudo-random értékeket akarunk generálni,
+    példányokhoz kötött <code>seed</code> alapján. Ehhez C++-ban ezesetben ajánlatos az
+    <code>std::uniform_real_distribution</code> osztályt használni egy <code>std::default_random_engine</code> 
+    generátorral: (összetettebb, mint a <code>rand()</code>, de több lehetőséget nyújt)
+    </para>
+    <programlisting language="c++">
+<![CDATA[class polargen
+{
+public:
+    polargen()
+      : rdev(
+            std::chrono::system_clock
+               ::now().time_since_epoch().count()
+        ),
+        r_unif_dist(-1.0, 1.0),
+        hasStored(false) {}
+
+    polargen(uint_fast32_t seed)
+      : rdev(seed),
+        r_unif_dist(-1.0, 1.0),
+        hasStored(false) {}
+
+    double next()
+    {
+        /*...*/
+
+        //Véletlen számok genrálása a -1.0 és 1.0 közötti értékekre beállított std::uniform_real_distribution-nel:
+            v1 = r_unif_dist(rdev);
+            v2 = r_unif_dist(rdev);
+        
+        /*...*/
+    }
+
+private:
+    std::default_random_engine rdev;
+    std::uniform_real_distribution<double> r_unif_dist;
+    double stored;
+    bool hasStored;
+}]]>
+        </programlisting>
+        <para>***</para>
+        <para>
+        Javában hasonló módon járunk el, viszont itt bele vagyunk kényszerítve
+        egy objektum-orientált keretbe (ez a Java egy gyakran kritizált tulajdonsága).
+        </para><para>
+        Kétféle implementáció lehetséges: létrehozhatunk egy statikus osztályt
+        (privát konstuktor, csak statikus elemek) <code>java.lang.Math.random()</code>-mal,
+        vagy készíthetünk egy példányosítható osztályt, amely <code>java.util.Random</code>-ot használ.
+        Az utóbbi esetében példányonként megadhatunk egy seedet.
+        </para>
+        <para>Itt a seedelhető változat:
+        (valójában redundáns, mivel lényegében ugyanazt éri el, mint a <code>Random.nextGaussian()</code>)</para>
+<programlisting language="java">
+<![CDATA[package prog1.welch;
+
+import java.util.Random;
+
+public class polar {
+    Random rand;
+    boolean hasStoredValue;
+    double storedValue;
+
+    public polar() {
+        rand = new Random();
+        hasStoredValue = false;
+    }
+
+    public polar(long seed) {
+        rand = new Random(seed);
+        hasStoredValue = false;
+    }
+
+    double next() {
+        if(hasStoredValue) {
+            hasStoredValue = false;
+            return storedValue;
+        }
+
+        double v1, v2, w;
+
+        do {
+            v1 = rand.nextDouble() * 2 - 1;
+            v2 = rand.nextDouble() * 2 - 1;
+            w = v1 * v1 + v2 * v2;
+        } while(w > 1);
+
+        double r = Math.sqrt(-2.0 * Math.log(w) / w);
+
+        hasStoredValue = true;
+        storedValue = r * v2;
+
+        return r * v1;
+    }
+}]]>
+</programlisting>
+        <para><quote>
+        "...térj ki arra is, hogy a JDK forrásaiban a Sun programozói
+            pont úgy csinálták meg ahogyan te is, azaz az OO nemhogy nem nehéz, hanem éppen természetes neked!"
+        </quote></para>
+        <para>Ez majdnem igaz, annyi kiegészítéssel, hogy az előbb említett <code>java.util.Random</code> osztály
+        thread-safe, azaz több szálon is használható. (Nem ajánlatos egy <code>Random</code> példányt több szál között
+        megosztva használni, de mindenesetre lehetséges.)</para>
     </section>
 
     <section>
