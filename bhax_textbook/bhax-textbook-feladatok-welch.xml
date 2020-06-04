@@ -6,7 +6,7 @@
     <section>
         <title>Első osztályom</title>
         <para>
-            Valósítsd meg C++-ban és Java-ban az módosított polártranszformációs algoritmust! A matek háttér 
+            Valósítsd meg C++-ban és Java-ban a módosított polártranszformációs algoritmust! A matek háttér 
             teljesen irreleváns, csak annyiban érdekes, hogy az algoritmus egy számítása során két normálist
             számol ki, az egyiket elspájzolod és egy további logikai taggal az osztályban jelzed, hogy van vagy
             nincs eltéve kiszámolt szám.
@@ -38,6 +38,8 @@
         <para>
             Megoldás forrása:
         </para>
+        <programlisting language="c++">
+        </programlisting>
     </section>
 
     <section>
@@ -66,6 +68,23 @@
         <para>
             Megoldás forrása: ugyanott.
         </para>
+        <para>
+        Ez a feladat a kompozícióhoz képest annyiban tér el, hogy a
+        </para>
+        <programlisting language="c++">node root;</programlisting>
+        <para>helyett</para>
+        <programlisting language="c++">node *root;</programlisting>
+        <para>fog szerepelni a <code>bin_tree&lt;&gt;</code> osztályban, illetve a konstruktorokban és a destruktorban
+        <code>new</code> és <code>delete</code> utasításokra van szükségünk:</para>
+        <programlisting language="c++">
+        bin_tree() : root(new node()) {}
+        bin_tree(const T&amp; r) : root(new node(r)) {}
+        ~bin_tree() { delete root; }
+        </programlisting>
+        <para>Használhatunk ehelyett <code>std::unique_ptr&lt;node&gt;</code>-t is a birtoklás erősebb kifejezésére,
+        ekkor külön <code>delete</code>-re sincs szükségünk.</para>
+        <para>
+        </para>
      </section>
 
     <section>
@@ -79,6 +98,12 @@
         </para>
         <para>
             Megoldás forrása: ugyanott.
+        </para>
+        <para>
+        Késztetést érzek rá, hogy a feladattól eltérjek, mivel a mozgató konstruktort a mozgató értékadásra alapozni
+        elég szokatlan és előnytelen dolog (másolásnál is). Általában pont fordítva szokott lenni: a konstruktornak
+        egyszerűbb a feladata, csak fel kell építenie egy példányt adott másolandó/mozgatandó példány alapján. Az
+        értékadó operátoroknak viszont emellett meg is kell semmisíteniük az előző érték mögött álló példányt.
         </para>
     </section>
 

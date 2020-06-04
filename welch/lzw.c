@@ -32,8 +32,8 @@ void bintree_preorder_print(bintree_node *root);
 void bintree_postorder_print(bintree_node *root);
 
 #define BINTREE_PRINT_MAX_WIDTH 50
-void bintree_print(bintree_node *node);
-void _bintree_print_sub(bintree_node *node, wchar_t *pre, int last);
+void bintree_print(bintree_node *node, int b_print_nulls);
+void _bintree_print_sub(bintree_node *node, int b_print_nulls, wchar_t *pre, int last);
 
 
 int main()
@@ -56,7 +56,7 @@ int main()
         lzw_insert(&tree, input);
     }
 
-    bintree_print(tree.root);
+    bintree_print(tree.root, 0);
 
     lzw_free(&tree);
 
@@ -86,7 +86,9 @@ void lzw_insert(lzw_hdr *tree, char ch)
     if(*child == NULL)
     {
         *child = calloc(1, sizeof(bintree_node));
-        (*child)->data = tree->n_nodes++;
+        //(*child)->data = tree->n_nodes++;
+        (*child)->data = ch == '0' ? 0 : 1;
+
         tree->ins = tree->root;
     }
     else tree->ins = *child;
@@ -125,15 +127,15 @@ void bintree_postorder_print(bintree_node *root)
     printf("%d", root->data);
 }
 
-void bintree_print(bintree_node *root)
+void bintree_print(bintree_node *root, int b_print_nulls)
 {
     static wchar_t indent[BINTREE_PRINT_MAX_WIDTH];
     memset(indent, 0, sizeof(wchar_t) * BINTREE_PRINT_MAX_WIDTH);
 
-    _bintree_print_sub(root, indent, -1);
+    _bintree_print_sub(root, 0, indent, -1);
 }
 
-void _bintree_print_sub(bintree_node *node, wchar_t *pre, int type)
+void _bintree_print_sub(bintree_node *node, int b_print_nulls, wchar_t *pre, int type)
 {
     if(type != -1)
     {
@@ -141,30 +143,42 @@ void _bintree_print_sub(bintree_node *node, wchar_t *pre, int type)
         if(type == 0) wprintf(L"├─");
         else wprintf(L"└─");
     }
-    if(node == NULL) wprintf(L"NULL\n");
+
+    if(node == NULL)
+    {
+        wprintf(L"NULL\n");
+        return;
+    }
+
+    wprintf(L"%d\n", node->data);
+
+    int pre_len = wcslen(pre);
+    if(pre_len + 2 > BINTREE_PRINT_MAX_WIDTH)
+    {
+        wprintf(pre);
+        if(type == 0) wprintf(L"│ └─...\n");
+        else if(type == 1) wprintf(L"  └─...\n");
+
+        return;
+    }
+
+    if(type == 0) swprintf(pre + pre_len, 3, L"│ ");
+    else if(type == 1) swprintf(pre + pre_len, 3, L"  ");
+
+    if(b_print_nulls || node->left != NULL && node->right != NULL)
+    {
+        _bintree_print_sub(node->left, b_print_nulls, pre, 0);
+        _bintree_print_sub(node->right, b_print_nulls, pre, 1);
+    }
     else
     {
-
-        wprintf(L"%d\n", node->data);
-
-        int pre_len = wcslen(pre);
-        if(pre_len + 2 > BINTREE_PRINT_MAX_WIDTH)
-        {
-            wprintf(pre);
-            if(type == 0) wprintf(L"│ └─...\n");
-            else if(type == 1) wprintf(L"  └─...\n");
-        }
-        else
-        {
-            if(type == 0) swprintf(pre + pre_len, 3, L"│ ");
-            else if(type == 1) swprintf(pre + pre_len, 3, L"  ");
-
-            _bintree_print_sub(node->left, pre, 0);
-            _bintree_print_sub(node->right, pre, 1);
-
-            pre[pre_len] = L'\0';
-        }
+        if(node->left != NULL)
+            _bintree_print_sub(node->left, b_print_nulls, pre, 1);
+        if(node->right != NULL)
+            _bintree_print_sub(node->right, b_print_nulls, pre, 1);
     }
+
+    pre[pre_len] = L'\0';
 }
 
 
