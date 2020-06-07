@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <locale>
 
-#include "bintree.h"
+#include "bintree.d.h"
 
 class lzw_tree : public bin_tree<int>
 {
@@ -14,11 +14,11 @@ public:
     {
         if(bit == 0)
             if(current->insert_left(0) == nullptr)
-                current = const_cast<node*>(current->left());
+                current = current->left();
             else current = &m_root;
         if(bit == 1)
             if(current->insert_right(1) == nullptr)
-                current = const_cast<node*>(current->right());
+                current = current->right();
             else current = &m_root;
 
         return false;
@@ -32,6 +32,17 @@ int main(int argc, char **argv)
 {
     std::setlocale(LC_ALL, "");
 
+    lzw_tree t;
+
+    t.insert(0);
+    t.insert(0);
+    t.insert(0);
+    t.insert(1);
+    std::wcout<<"***";
+    lzw_tree t2;
+    t2 = std::move(t);
+
+    return 0;
 
     lzw_tree tree;
     char in;

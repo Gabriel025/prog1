@@ -1,5 +1,5 @@
-#ifndef BINTREE_H
-#define BINTREE_H
+#ifndef BINTREE_D_H
+#define BINTREE_D_H
 
 #include<iostream>
 #include<algorithm>
@@ -17,7 +17,7 @@ public:
         T m_data;
 
     public:
-        node();
+        node();// = default;
         node(const T& d);
         node(T&& d);
         ~node();
@@ -69,17 +69,17 @@ protected:
 
 //node constructors and destructos
 template<class T>
-bin_tree<T>::node::node() : m_data(), m_left(nullptr), m_right(nullptr) {}
+bin_tree<T>::node::node() : m_data(), m_left(nullptr), m_right(nullptr) { std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::node()\n"; }
 
 template<class T>
-bin_tree<T>::node::node(const T& d) : m_data(d), m_left(nullptr), m_right(nullptr) {}
+bin_tree<T>::node::node(const T& d) : m_data((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::node(const T& d = "<<d<<")\n", d)), m_left(nullptr), m_right(nullptr) {}
 
 template<class T>
-bin_tree<T>::node::node(T&& d) : m_data(std::forward<T>(d)), m_left(nullptr), m_right(nullptr) {}
+bin_tree<T>::node::node(T&& d) : m_data((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::node(T&& d = "<<d<<")\n", std::forward<T>(d))), m_left(nullptr), m_right(nullptr) {}
 
 template<class T>
 bin_tree<T>::node::~node()
-{
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::~node()\n";
     delete m_left;
     delete m_right;
 }
@@ -89,7 +89,7 @@ bin_tree<T>::node::~node()
 //copy/move constructor, copy assignment (copy-and-swap style, thus includes move semantics)
 template<class T>
 bin_tree<T>::node::node(const node& other)
-{
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::node(const node& other)\n";
     if(*this == other) return; //prevent self-assignment
     if(other.m_left != nullptr)
         m_left = new node(*other.m_left);
@@ -103,14 +103,14 @@ bin_tree<T>::node::node(const node& other)
 }
 
 template<class T>
-bin_tree<T>::node::node(node&& other) : node() //construct self as an empty instance and swap it out
+bin_tree<T>::node::node(node&& other) : node((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::node(node&& other)\n", 0)) //construct self as an empty instance and swap it out
 {
     swap(*this, other);
 }
 
 template<class T>
 typename bin_tree<T>::node& bin_tree<T>::node::operator=(node other)
-{
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::operator=(node other)\n";
     swap(*this, other);
 
     return *this;
@@ -118,7 +118,7 @@ typename bin_tree<T>::node& bin_tree<T>::node::operator=(node other)
 
 template<class T>
 void bin_tree<T>::node::swap(node& a, node& b)
-{
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::swap(node& a, node& b)\n";
     //std::swap tries to use move semantics if applicable (if "data" has move semantics)
     std::swap(a.m_data, b.m_data);
     std::swap(a.m_left, b.m_left);
@@ -130,7 +130,7 @@ void bin_tree<T>::node::swap(node& a, node& b)
 //node equality operators
 template<class T>
 bool bin_tree<T>::node::operator==(const node& other) const
-{
+{ std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::operator==(const node& other)\n"; 
     return m_data == other.m_data && m_left == other.m_left && m_right == other.m_right;
 }
 
@@ -169,8 +169,8 @@ typename bin_tree<T>::node *bin_tree<T>::node::right() { return m_right; }
 
 template<class T>
 typename bin_tree<T>::node *bin_tree<T>::node::insert_left(const T& data, bool overwrite)
-{
-    if(!overwrite && m_left != nullptr) return nullptr;
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::insert_left(const T& data = "<<data<<", bool overwrite = "<<overwrite<<")";
+    if(!overwrite && m_left != nullptr){ std::wcout<<" --failed, would need overwrite\n"; return nullptr; }std::wcout<<"\n";
     if(m_left != nullptr) delete m_left;
 
     return m_left = new node(data);
@@ -178,8 +178,8 @@ typename bin_tree<T>::node *bin_tree<T>::node::insert_left(const T& data, bool o
 
 template<class T>
 typename bin_tree<T>::node *bin_tree<T>::node::insert_left(T&& data, bool overwrite)
-{
-    if(!overwrite && m_left != nullptr) return nullptr;
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::insert_left(T&& data = "<<data<<", bool overwrite = "<<overwrite<<")";
+    if(!overwrite && m_left != nullptr){ std::wcout<<" --failed, would need overwrite\n"; return nullptr; }std::wcout<<"\n";
     if(m_left != nullptr) delete m_left;
 
     return m_left = new node(std::forward<T>(data));
@@ -187,8 +187,8 @@ typename bin_tree<T>::node *bin_tree<T>::node::insert_left(T&& data, bool overwr
 
 template<class T>
 typename bin_tree<T>::node *bin_tree<T>::node::insert_right(const T& data, bool overwrite)
-{
-    if(!overwrite && m_right != nullptr) return nullptr;
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::insert_right(const T& data = "<<data<<", bool overwrite = "<<overwrite<<")";
+    if(!overwrite && m_right != nullptr){ std::wcout<<" --failed, would need overwrite\n"; return nullptr; }std::wcout<<"\n";
     if(m_right != nullptr) delete m_right;
 
     return m_right = new node(data);
@@ -196,8 +196,8 @@ typename bin_tree<T>::node *bin_tree<T>::node::insert_right(const T& data, bool 
 
 template<class T>
 typename bin_tree<T>::node *bin_tree<T>::node::insert_right(T&& data, bool overwrite)
-{
-    if(!overwrite && m_right != nullptr) return nullptr;
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::node::insert_right(T&& data = "<<data<<", bool overwrite = "<<overwrite<<")";
+    if(!overwrite && m_right != nullptr){ std::wcout<<" --failed, would need overwrite\n"; return nullptr; }std::wcout<<"\n";
     if(m_right != nullptr) delete m_right;
 
     return m_right = new node(std::forward<T>(data));
@@ -253,29 +253,29 @@ void bin_tree<T>::node::_print(const node *n, bool print_nulls, int max_width,
 
 //constructors, destructor
 template<class T>
-bin_tree<T>::bin_tree() {}
+bin_tree<T>::bin_tree() { std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::bin_tree()\n"; }
 
 template<class T>
-bin_tree<T>::bin_tree(const T& r) : m_root(r) {}
+bin_tree<T>::bin_tree(const T& r) : m_root((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::bin_tree(const T& r = "<<r<<")\n", r)) {}
 
 template<class T>
-bin_tree<T>::bin_tree(T&& r) : m_root(std::forward<T>(r)) {}
+bin_tree<T>::bin_tree(T&& r) : m_root((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::bin_tree(T&& r = "<<r<<")\n", std::forward<T>(r))) {}
 
 template<class T>
-bin_tree<T>::~bin_tree() {}
+bin_tree<T>::~bin_tree() {std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::~bin_tree()\n";}
 
 
 
 //copy/move constructor, copy assignment (copy-and-swap style, thus includes move semantics)
 template<class T>
-bin_tree<T>::bin_tree(const bin_tree<T>& other) : m_root(other.m_root) {}
+bin_tree<T>::bin_tree(const bin_tree<T>& other) : m_root((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::bin_tree(const bin_tree<T>& other)\n", other.m_root)) {}
 
 template<class T>
-bin_tree<T>::bin_tree(bin_tree<T>&& other) : m_root(std::move(other.m_root)) {}
+bin_tree<T>::bin_tree(bin_tree<T>&& other) : m_root((std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::bin_tree(bin_tree<T>&& other)\n", std::move(other.m_root))) {}
 
 template<class T>
 bin_tree<T>& bin_tree<T>::operator=(bin_tree<T> other)
-{
+{std::wcout<<__FILE__<<":"<<__LINE__<<": bin_tree<T>::operator=(bin_tree<T> other)\n";
     std::swap(m_root, other.m_root);
 
     return *this;
@@ -289,4 +289,4 @@ void bin_tree<T>::print(bool print_nulls, int max_width) const
     node::_print(&m_root, print_nulls, max_width);
 }
 
-#endif //BINTREE_H
+#endif //BINTREE_D_H

@@ -388,9 +388,59 @@ unsigned char biomorph_iter(complexd z, complexd c, unsigned int max_iter)
             Megoldás forrása: az ötödik előadás <link xlink:href="https://arato.inf.unideb.hu/batfai.norbert/UDPROG-BHAX/Prog1_5.pdf">26-33 fólia</link>, 
             illetve <link xlink:href="https://sourceforge.net/p/udprog/code/ci/master/tree/source/binom/Batfai-Barki/frak/">https://sourceforge.net/p/udprog/code/ci/master/tree/source/binom/Batfai-Barki/frak/</link>.
         </para>
+        <para>Az előző megoldások kódját tök jól felhasználhatjuk, csak a rajzolással kapcsolatos kódot
+        össze kell hoznunk egy grafikus felülettel. Qt-ben viszonylag könnyű dolgozni, talán nagy részben azért,
+        mert maga a könyvtár nagyon jól dokumentált, és mert a felhalsználói interfészeknél megszokott
+        esemény-alapú architektúrát követő signal-slot mechanizmussal könnyű elérni az éppen igényeinknek megfelelő viselkedést.
+        </para><para>
+        Csak összehasonlításként, egyszerűbb grafikus felületek építésével próbálkoztam már korábban
+        Windows API-ban is, és noha jó dolog mélyen belelátni a windows shell működésébe, de mindenesetre
+        hálát tudok adni mindazoknak a fejlesztőknek, akik ezeket a natív könyvtárakat becsomagolták
+        lényegesen könnyebben kezelhető (ráadásul legtöbb esetben cross-platform) toolkitekbe.
+        </para><para>
+        A Mandelbrot-halmazzal kapcsolatos rész annyiban változott, hogy most képfájl helyett egy <code>QImage</code>-be rajzoltunk,
+        melyet aztán az ablakunk <code>paintEvent()</code>-jében meg is jelenítettünk.
+        </para>
+        <para>
+        A panning/zooming (mozgatás, nagyítás) hasonlóan működik, mint egy szokásos képmegjelenítő programban,
+        tehát nagyításnál/kicsinyítésnél az egérmutató adja a fix pontot, mozgatásnál meg a kép követi az kurzor mozgását.
+        Annyiban nehezebb ennél a feladat, hogy a képet időnként újra is kell számolnunk. Namost, minden egéreseménynél
+        nem érdemes ezt megtenni, mert a kapott program nagyon nem lenne reszponzív,
+        és rengeteg számítás szinte rögtön feleslegbe menne. Így egy időzítőt felhasználva,
+        a programom csak akkor számol, ha egy megadott időköz eltelt új esemény nélkül.
+        Ezt ugyan még mindig a fő szálon végzi a nehéz munkát
+        (egy következő lépés lenne a dolgozó szálak használata), de nagyjából csak akkor, amikor szükséges, amikor
+        nincs további pan/zoom esemény.
+        </para>
+        <para>További technikai részlet, hogy az ablak átméretezésénél mind a háttér <code>QImage</code>-ünket,
+        mind a jelenlegi nézet paramétereit is frissítenünk kell.
+        Ez a felhasználói felületek létrehozásának talán legkellemetlenebb, és legtöbb megfontolást igénylő része.
+        Jelen esetben csak egy képet jelenítünk meg, de ha tényleges vezérlőket használunk, akkor sajnos sok esetben
+        az általunk megálmodott layout csak egy kezdet. Minden értelmes keretek közti ablakméretre gondolnunk kell.</para>
+        <para>Egy pár screenshot:</para>
+<mediaobject>
+            <imageobject>
+                <imagedata fileref="img/5-5-1.png"/>
+            </imageobject></mediaobject>
+<mediaobject>
+            <imageobject>
+                <imagedata fileref="img/5-5-2.png"/>
+            </imageobject></mediaobject>
+<mediaobject>
+            <imageobject>
+                <imagedata fileref="img/5-5-3.png"/>
+            </imageobject></mediaobject>
+<mediaobject>
+            <imageobject>
+                <imagedata fileref="img/5-5-4.png"/>
+            </imageobject></mediaobject>
+    <para>
+    A legutolsó annak a példája, hogy mi történik, ha túl messzire zoomolunk, méghozzá annyira messzire, hogy túlmenjünk a
+    <code>double</code> típus által ábrázolható precízión. Ennek a problémának a megoldásához tetszőleges pontosságú arimetikát
+    kéne használnunk, de ez jelenleg a kis projektünk keretein talán túlmutat.
+    </para>
 <programlisting language="c++"><xi:include href="../mandelbrot/QtMandelbrot/main.cpp" parse="text" xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
     </section>
-
     <section>
         <title>Mandelbrot nagyító és utazó Java nyelven</title>
         <para>

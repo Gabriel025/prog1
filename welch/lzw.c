@@ -36,6 +36,17 @@ void bintree_postorder_print(bintree_node *root);
 void bintree_print(bintree_node *node, int b_print_nulls);
 void _bintree_print_sub(bintree_node *node, int b_print_nulls, wchar_t *pre, int last);
 
+void _bintree_preorder_print_d(bintree_node *root, int depth)
+{
+    if(root == NULL) return;
+    for(int i = 0; i < depth; i++) printf(" "); 
+    printf("%d\n", root->data);
+    _bintree_preorder_print_d(root->left, depth + 1);
+    _bintree_preorder_print_d(root->right, depth + 1);
+}void bintree_preorder_print_d(bintree_node *root)
+{
+    _bintree_preorder_print_d(root, 0);
+}
 
 int main()
 {
@@ -59,12 +70,13 @@ int main()
         lzw_insert(&tree, input);
     }
 
-    bintree_print(tree.root, 0);
+    bintree_preorder_print_d(tree.root);
 
     lzw_free(&tree);
 
     return 0;
 }
+
 
 
 lzw_hdr lzw_create(void)
@@ -112,6 +124,7 @@ void bintree_free(bintree_node *root)
         bintree_free(root->right);
     free(root);
 }
+
 
 
 void bintree_preorder_print(bintree_node *root)
