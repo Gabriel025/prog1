@@ -365,6 +365,111 @@ void _bintree_preorder_print_d(bintree_node *root, int depth)
         <para>
             Megoldás forrása: ugyanott.
         </para>
+        <para>
+        A megoldásom alapjául szolgáló <code>bin_tree&lt;T&gt;</code> osztályt az alábbi váz foglalja össze:
+        </para>
+<programlisting language="c++"><![CDATA[
+template <class T>
+class bin_tree
+{
+public:
+    class node
+    {
+        friend class bin_tree;
+
+    private:
+        node *m_left, *m_right;
+        T m_data;
+
+    public:
+        node();
+        node(const T& d);
+        node(T&& d);
+        ~node();
+
+        node(const node& other);
+        node(node&& other);
+
+        node& operator=(node other);
+
+        static void swap(node& a, node& b);
+
+        bool operator==(const node& other) const;
+        bool operator!=(const node& other) const;
+
+        const T& value() const;
+        void set_value(const T& val);
+        void set_value(T&& val);
+
+        node *left();
+        const node *left() const;
+        node *right();
+        const node *right() const;
+
+        node *insert_left(const T& data, bool overwrite = false);
+        node *insert_left(T&& data, bool overwrite = false);
+        node *insert_right(const T& data, bool overwrite = false);
+        node *insert_right(T&& data, bool overwrite = false);
+
+    private:
+        static void _print(const node *n, bool print_nulls, int max_width,
+            std::wstring pre = L"", int type = -1);
+    };
+
+    bin_tree();
+    bin_tree(const T& r);
+    bin_tree(T&& r);
+    ~bin_tree();
+
+    bin_tree(const bin_tree<T>& other);
+    bin_tree(bin_tree<T>&& other);
+
+    bin_tree<T>& operator=(bin_tree<T> other);
+
+    void print(bool print_nulls = false, int max_width = 64) const;
+
+protected:
+    node m_root;
+};
+]]></programlisting>
+        <para>
+        Ez egészen hosszúra sikerült. A lényeg igazából a beágyazott <code>node</code>
+        osztályban van, amelyet akár magában is lehetne használni bináris fák reprezentálásához.
+        A <code>bin_tree&lt;T&gt;</code> főként származtatott osztályok alapjaként hasznos,
+        hiszen további szabályok nélkül (pl. az LZW fa építésének szabályai) nem tudunk neki saját <code>insert()</code>
+        függvényt írni (csak olyat, amely ugyanazt csinálja, mint a <code>node</code> megfelelő metódusai).
+        </para>
+        <para>Hogy lássuk, mi értelme van annak ~200 sornyi kódnak, ami a fenti váz metódusait implementálja,
+        származtassunk egy LZW bináris fa osztályt a <code>bin_tree&lt;T&gt;</code>-ből:</para>
+<programlisting language="c++"><![CDATA[
+class lzw_tree : public bin_tree<int>
+{
+public:
+    using bin_tree::bin_tree;
+    lzw_tree() : bin_tree(-1), current(&m_root) {}
+    lzw_tree(const int&) = delete;
+    lzw_tree(int&&) = delete;
+
+    bool insert(int bit)
+    {
+        if(bit == 0)
+            if(current->insert_left(0) == nullptr)
+                current = current->left();
+            else current = &m_root;
+        if(bit == 1)
+            if(current->insert_right(1) == nullptr)
+                current = current->right();
+            else current = &m_root;
+
+        return false;
+    }
+
+private:
+    node *current;
+};
+]]></programlisting>
+    <para>Mindössze ennyi dolgunk van. A bináris fa működésével már nem kell foglalkoznunk,
+    csak az LZW bináris fa saját tulajdonságaival.</para>
     </section>
 
     <section>
@@ -385,12 +490,13 @@ void _bintree_preorder_print_d(bintree_node *root, int depth)
         <programlisting language="c++">node root;</programlisting>
         <para>helyett</para>
         <programlisting language="c++">node *root;</programlisting>
-        <para>fog szerepelni a <code>bin_tree&lt;&gt;</code> osztályban, illetve a konstruktorokban és a destruktorban
+        <para>fog szerepelni a <code>bin_tree&lt;T&gt;</code> osztályban, illetve a konstruktorokban és a destruktorban
         <code>new</code> és <code>delete</code> utasításokra van szükségünk:</para>
         <programlisting language="c++">
 bin_tree() : root(new node()) {}
-bin_tree(const T&amp; r) : root(new node(r)) {}
-~bin_tree() { delete root; }
+bin_tree(const T&amp; r) : m_root(new node(r)) {}
+bin_tree(T&amp;&amp; r) : m_root(new node(std::forward&lt;T&gt;(r))) {}
+~bin_tree() { delete m_root; }
         </programlisting>
         <para>Használhatunk ehelyett <code>std::unique_ptr&lt;node&gt;</code>-t is a birtoklás erősebb kifejezésére,
         ekkor külön <code>delete</code>-re sincs szükségünk.</para>
@@ -416,6 +522,82 @@ bin_tree(const T&amp; r) : root(new node(r)) {}
         egyszerűbb a feladata, csak fel kell építenie egy példányt adott másolandó/mozgatandó példány alapján. Az
         értékadó operátoroknak viszont emellett meg is kell semmisíteniük az előző érték mögött álló példányt.
         </para>
+        <para>
+        Emellett a megoldás kidolgozása közben rátaláltam egy releváns C++ idiómára, "copy and swap" néven,
+        amely képes jóval egyszerűbbé tenni
+        a rule of three/rule of five által említett metódusok elkészítését. Ehhez találtam egy egészen részletes
+        magyarázatot Stackoverflowon: <link xlink:href="https://stackoverflow.com/a/3279550">https://stackoverflow.com/a/3279550</link>
+        </para>
+        <para>
+        Ennek szellemében nézzük is meg a <code>bin_tree&lt;T&gt;::node</code> osztály másoló/mozgató konstruktorait
+        és összevont értékadó operátorát:
+        </para>
+        <para>A másoló konstruktor:</para>
+        <programlisting language="c++"><![CDATA[
+template<class T>
+bin_tree<T>::node::node(const node& other)
+{
+    //Önmagunkat ne másoljuk (lásd node::operator==)
+    if(*this == other) return;
+
+    if(other.m_left != nullptr)
+        m_left = new node(*other.m_left);
+    else m_left = nullptr;
+
+    if(other.m_right != nullptr)
+        m_right = new node(*other.m_right);
+    else m_right = nullptr;
+
+    m_data = other.m_data;
+}
+]]></programlisting>
+<para>Ez mindent lemásol rekurzív módon, ahogy az elvárható.</para>
+<para>Ezzel szemben a mozgató konstruktor csak átveszi a megkapott argumentum értékeit.
+Méghozzá úgy, hogy először konstruktor-delegáción keresztül
+egy üres <code>node</code>-ként inicializálja a saját példányt (<code>this</code>),
+majd ezt kicseréli az <code>other</code>-re. Ebből az is következik, hogy az <code>other</code> ezek után egy üres
+<code>node</code> lesz, ami megfelel a mozgató szemantika által megkövetelt "újrahasznosíthatóságnak" is.</para>
+<programlisting language="c++"><![CDATA[
+template<class T>
+bin_tree<T>::node::node(node&& other)
+  : node() //a saját példány egy üres node lesz
+{
+    swap(*this, other); //amit aztán kicseréljük az other példányra
+}]]></programlisting>
+<para>Az értékadó operátor az említett idiómának megfelelően érték szerint kéri az <code>other</code> paramétert.
+Ez furcsának tűnhet, hiszen akkor hol van itt szó mozgatásról?</para><para>A válasz abban rejlik, hogy ezt a példányt a fordítóprogram
+ilyenkor mindig aszerint inicializálja, ami az operátor jobb oldalán lévő részkifejezés eredménye.
+Ha ez egy <code>rvalue</code>, tehát pl. egy <code>std::move()</code> eredménye, vagy egy helyben konstruált objektum,
+akkor mozgató konstruktorral hozza létre az argumentumot (amennyiben az létezik), ha pedig <code>lvalue</code>,
+akkor a másoló konstruktort használja. Így a fordítóprogram nagyjából mindent megcsinál helyettünk, nekünk már csak
+egy cserét kell végrehajtanunk.</para>
+<programlisting language="c++"><![CDATA[
+template<class T>
+typename bin_tree<T>::node& bin_tree<T>::node::operator=(node other)
+{
+    swap(*this, other);
+
+    return *this;
+}]]></programlisting>
+<para>De mi lesz az <code>other</code>-rel? Ezt is elintézi helyettünk a fordítóprogram, a C++ standard szabályai alapján:
+Az érték szerint átadott argumentumok a függvény visszatérése után megsemmisülnek.</para>
+<para>Végezetül itt van a módszerünk központi eleme, a <code>swap()</code> függvény.
+Az <code>std::swap()</code> is mozgató konstruktort és mozgató értékadást használ, amennyiben meg van rá a lehetősége.
+Eddig mindössze azért nem használhattunk, mert ha a mozgató konstruktor <code>std::swap()</code>-ot használ,
+a <code>std::swap()</code> pedig mozgató konstruktort, akkor ezt a problémát a számítógép egy gyors
+stack oveflow-val oldotta volna meg. Ezt többek között úgy kerülhetjük el, ha a változóinkat külön-külön cseréljük ki.
+Mozgató szemantika ezesetben csak <code>T</code>-ben fordulhat elő
+(<code>T</code> a mi részünkről bármi lehet, akár vektor, vagy egy másik bináris fa is!),
+és ha netán tényleg ilyen típussal van dolgunk, akkor az std::swap ennek megfelelően jár el.</para>
+<programlisting language="c++"><![CDATA[
+template<class T>
+void bin_tree<T>::node::swap(node& a, node& b)
+{
+    std::swap(a.m_data, b.m_data);
+    std::swap(a.m_left, b.m_left);
+    std::swap(a.m_right, b.m_right);
+}
+]]></programlisting>
     </section>
 
     <section>

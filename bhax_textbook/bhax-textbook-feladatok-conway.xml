@@ -51,6 +51,141 @@
             Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
             Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
         </para>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="img/gol1.png" scale="60"/>
+            </imageobject>
+        </mediaobject>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="img/gol2.png" scale="60"/>
+            </imageobject>
+        </mediaobject>
+        <programlisting language="c++"><![CDATA[
+#include <QtWidgets>
+
+#define FRAMERATE 20
+#define CELLSIZE 10
+
+class GOLWindow : public QWidget
+{
+private:
+    QImage frame, nextframe;
+    QTimer timer;
+
+    void resizeEvent(QResizeEvent *event) override
+    {
+        resizeFrame(event->size());
+    }
+
+    void resizeFrame(const QSize& size)
+    {
+        QImage new_frame = QImage(size.width() / CELLSIZE, size.height() / CELLSIZE, QImage::Format_Mono);
+        new_frame.fill(0);
+        QPainter p(&new_frame);
+        p.drawImage(QPoint(0, 0), frame);
+        frame = new_frame;
+        nextframe = new_frame;
+    }
+
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        if(event->key() == Qt::Key::Key_Space)
+        {
+            if(timer.isActive()) timer.stop();
+            else timer.start(1000/FRAMERATE);
+        }
+        else
+            QWidget::keyPressEvent(event);
+    }
+
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        paintCell(event);
+    }
+
+    void mouseMoveEvent(QMouseEvent *event) override
+    {
+        paintCell(event);
+    }
+
+    void paintCell(QMouseEvent *event)
+    {
+        if(event->buttons() & Qt::LeftButton)
+        {
+            frame.setPixel(event->x() / CELLSIZE, event->y() / CELLSIZE, 1);
+            nextframe.setPixel(event->x() / CELLSIZE, event->y() / CELLSIZE, 1);
+            repaint();
+        }
+        else if(event->buttons() & Qt::RightButton)
+        {
+            frame.setPixel(event->x() / CELLSIZE, event->y() / CELLSIZE, 0);
+            nextframe.setPixel(event->x() / CELLSIZE, event->y() / CELLSIZE, 0);
+            repaint();
+        }
+    }
+
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter p(this);
+        p.drawImage(rect(), frame);
+    }
+
+    void tick()
+    {
+        for(int y = 0; y < frame.height(); y++)
+            for(int x = 0; x < frame.width(); x++)
+            {
+                int n = nLiveNeighbors(x, y);
+
+                if(frame.pixelIndex(x, y) == 1 && (n < 2 || n > 3))
+                    nextframe.setPixel(x, y, 0);
+                if(frame.pixelIndex(x, y) == 0 && n == 3)
+                    nextframe.setPixel(x, y, 1);
+            }
+
+        frame = nextframe;
+        repaint();
+    }
+
+    int nLiveNeighbors(int x, int y)
+    {
+        int n = 0;
+
+        for(int dy = -1; dy <= 1; dy++)
+            for(int dx = -1; dx <= 1; dx++)
+            {
+                if(dx == 0 && dy == 0) continue;
+                if(x + dx < 0 || y + dy < 0) continue;
+                if(x + dx >= frame.width() || y + dy >= frame.height()) continue;
+
+                if(frame.pixelIndex(x + dx, y + dy) == 1) n++;
+            }
+        return n;
+    }
+
+public:
+    explicit GOLWindow(QWidget *parent = nullptr) : QWidget(parent), timer(this)
+    {
+        setWindowTitle("Game of Life");
+        setMouseTracking(true);
+        resize(800, 600);
+        connect(&timer, &QTimer::timeout, this, QOverload<>::of(&GOLWindow::tick));
+        timer.start(1000/FRAMERATE);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);
+
+    GOLWindow window;
+    //window.resize(800, 600);
+    window.show();
+
+    return app.exec();
+}
+        ]]></programlisting>
     </section>
 
     <section>
@@ -65,6 +200,36 @@
             Tanulságok, tapasztalatok, magyarázat... ezt kell az olvasónak kidolgoznia, mint labor- vagy otthoni mérési feladatot!
             Ha mi már megtettük, akkor használd azt, dolgozd fel, javítsd, adj hozzá értéket!
         </para>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="img/brainb.png" scale="35"/>
+            </imageobject>
+        </mediaobject>
+        <para>Az eredményem:</para>
+        <screen>
+<![CDATA[
+NEMESPOR BrainB Test 6.0.3
+time      : 6000
+bps       : 51360
+noc       : 54
+nop       : 0
+lost      : 
+19300 33430 37170 13680 23170 18020 53020 47200 25980 20190 21400 9820 3960 23320 7510 22840 39610 39350 34970 32180 22610 33810 31240 68620 57120 56380 47180 41250 26200 28620 18990 23440 23460 24760 17320 14160 40680 50850 74690 55540 61510 
+mean      : 32793
+var       : 16949.5
+found     : 19710 22020 19240 50990 29450 12500 0 9230 11780 13960 24190 21520 40870 41930 33040 13120 27160 27470 18150 22870 34230 38190 23490 31800 23140 42750 25090 23630 25880 22690 5640 17130 16540 15800 13630 19280 26980 14870 21680 8070 5630 32040 2640 3350 4240 21900 3000 8190 22260 18450 24770 27570 35240 29510 26790 40920 65270 31520 22820 23020 30060 37830 33370 27610 30110 40540 37470 46190 41020 48760 76850 17700 26690 20800 33350 33950 57390 21910 43800 40340 52000 56910 51290 64280 61860 79540 46170 49570 43190 47810 
+mean      : 29524
+var       : 16527.8
+lost2found: 12500 24190 33040 13120 27160 23490 23630 5640 14870 8070 2640 3000 24770 27570 40920 31520 22820 27610 17700 21910 49570 43190 
+mean      : 22678
+var       : 12559.5
+found2lost: 33430 37170 13680 23170 53020 47200 25980 20190 21400 9820 23320 22840 39610 39350 34970 22610 33810 68620 40680 74690 61510 
+mean      : 35574
+var       : 17475.7
+mean(lost2found) < mean(found2lost)
+time      : 10:0
+U R about 3.55542 Kilobytes]]>
+        </screen>
     </section>
 
     <section>

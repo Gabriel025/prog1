@@ -25,25 +25,15 @@ private:
     QPoint prev_mouse_pos;
 
     QTimer recalc_timer;
-    QThread recalc_thread;
-    QMutex frame_lock;
-
 
     void resizeEvent(QResizeEvent *event) override
     {
         QImage new_frame = QImage(width(), height(), QImage::Format_Grayscale8);
         new_frame.fill(0);
         frame = new_frame;
-        //frame = frame.scaled(size());
-        //view_src_rect = frame.rect();
 
         update_corner_coords();
         recalc_timer.start();
-    }
-
-    void keyPressEvent(QKeyEvent *event) override
-    {
-        event->ignore();
     }
 
     void mousePressEvent(QMouseEvent *event) override
@@ -73,7 +63,7 @@ private:
     void wheelEvent(QWheelEvent *event) override
     {
         complexd c_mouse = frame_coords_to_complex(event->pos());
-        double scale_factor = qPow(2, (qreal)event->angleDelta().y() / 1200); qDebug()<<"wheel "<<event->angleDelta().y()<<" "<<scale_factor;
+        double scale_factor = qPow(2, (qreal)event->angleDelta().y() / 1200);
 
         c_center = (c_center - c_mouse) * scale_factor + c_mouse;
         half_width = half_width * scale_factor;
@@ -95,9 +85,6 @@ private:
 
     void recalculate()
     {
-        qDebug()<<"recalculate\n";
-        //frame_lock.lock();
-
         for(QPoint pt; pt.y() < frame.height(); pt.setY(pt.y() + 1))
         {
             for(pt.setX(0); pt.x() < frame.width(); pt.setX(pt.x() + 1))
@@ -109,7 +96,6 @@ private:
         }
 
         view_src_rect = frame.rect();
-        //frame_lock.unlock();
 
         update();
     }
@@ -142,10 +128,6 @@ private:
         complexd diag(half_width, half_width * frame.height() / frame.width());
         top_left = c_center - diag;
         bottom_right = c_center + diag;
-
-        qDebug()<<"c_center:     "<<c_center.real()<<"; "<<c_center.imag();
-        qDebug()<<"top_left:     "<<top_left.real()<<"; "<<top_left.imag();
-        qDebug()<<"bottom_right: "<<bottom_right.real()<<"; "<<bottom_right.imag();
     }
 
     complexd frame_coords_to_complex(QPoint point)
@@ -170,16 +152,14 @@ private:
 
 public:
     explicit MandelbrotWindow(QWidget *parent = nullptr)
-        : QWidget(parent), recalc_timer(this), recalc_thread(this)
+        : QWidget(parent), recalc_timer(this)
     {
         setWindowTitle("Mandelbrot set");
         resize(800, 600);
 
         recalc_timer.setSingleShot(true);
         recalc_timer.setInterval(RECALC_DELAY);
-        //connect(&recalc_timer, &QTimer::timeout, &recalc_thread, [this](){qDebug()<<"recalc_thread.start();"; recalc_thread.start(); });
         connect(&recalc_timer, &QTimer::timeout, this, [this](){ recalculate(); });
-        connect(&recalc_thread, &QThread::finished, this, [this](){ update(); });
     }
 };
 
@@ -189,7 +169,6 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
 
     MandelbrotWindow window;
-    //window.resize(800, 600);
     window.show();
 
     return app.exec();
